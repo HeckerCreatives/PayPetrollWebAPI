@@ -58,7 +58,7 @@ exports.initialize = async () => {
     })
 
     if(admin.length <= 0 ){
-        await StaffUser.create({ username: "paypetrolladmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "superadmin"})
+        await StaffUser.create({ _id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "paypetrolladmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "superadmin"})
         .catch(err => {
             console.log(`Error saving admin data: ${err}`)
             return
