@@ -1,9 +1,6 @@
 const router = require("express").Router()
 const { getuserdetails, updateuserprofile, getreferrallink, changepassworduser, changepassworduserforadmin, getuserdetailssuperadmin } = require("../controllers/user")
 const { protectplayer, protectsuperadmin } = require("../middleware/middleware")
-const pictureupload = require("../middleware/picuploads")
-
-const uploadimg = pictureupload.single("file")
 
 router
     .get("/getreferrallink", protectplayer, getreferrallink)
