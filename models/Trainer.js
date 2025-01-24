@@ -20,6 +20,9 @@ const TrainerSchema = new mongoose.Schema(
             type: Number,
             default: 7,
         },
+        animal: {
+            type: String
+        },
         rank: {
             type: String
         }

@@ -13,6 +13,7 @@ const path = require("path");
 const privateKey = fs.readFileSync(path.resolve(__dirname, "../keys/private-key.pem"), 'utf-8');
 const { default: mongoose } = require("mongoose");
 const Userwallets = require("../models/Userwallets");
+const StaffUserwallets = require("../models/Staffuserwallets");
 
 const encrypt = async password => {
     const salt = await bcrypt.genSalt(10);
@@ -196,7 +197,104 @@ exports.authlogin = async(req, res) => {
     .catch(err => res.status(400).json({ message: "bad-request1", data: "There's a problem with your account! There's a problem with your account! Please contact customer support for more details." }))
 }
 
-exports.logout = async (req, res) => {
-    res.clearCookie('sessionToken', { path: '/' })
+
+exports.registerstaffs = async(req, res) => {
+    const {username, password} = req.body
+
+    if (username == "" || password == ""){
+        return res.status(400).json({ message: "bad-request", data: "Please complete the form first before saving." })
+    }
+
+    if (username.length < 5 || username.length > 40){
+        return res.status(400).json({message: "failed", data: "Minimum of 5 and maximum of 20 characters only for username! Please try again."})
+    }
+
+    const usernameRegex = /^[a-zA-Z0-9]+$/;
+    
+    if (!usernameRegex.test(username)){
+        return res.status(400).json({message: "failed", data: "Please don't use special characters for username! Please try again."})
+    }
+
+    if (password.length < 5 || password.length > 20){
+        return res.status(400).json({message: "failed", data: "Minimum of 5 and maximum of 20 characters only for password! Please try again."})
+    }
+
+    const passwordRegex = /^[a-zA-Z0-9\[\]!@#*]+$/;
+
+    if (!passwordRegex.test(password)){
+        return res.status(400).json({message: "failed", data: "Only []!@#* are supported special characters for password! Please try again."})
+    }
+
+    const staff = await Staffusers.findOne({username: { $regex: new RegExp('^' + username + '$', 'i') }})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`There's a problem searching staff user for ${username} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
+    })
+
+    if (staff){
+        return res.status(400).json({message: "failed", data: "You already registered this account! Please login if this is yours."})
+    }
+
+    const userdata = await Staffusers.create({username: username, password: password.toLowerCase(), webtoken: "", status: "active", auth: "admin"})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`There's a problem creating staff user for ${username} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
+    })
+
+    
+    await StaffUserwallets.create({owner: new mongoose.Types.ObjectId(userdata._id), type: "adminfee", amount: 0})
+    .catch(async err => {
+
+        await Staffusers.findOneAndDelete({_id: new mongoose.Types.ObjectId(userdata._id)})
+
+        console.log(`There's a problem creating admin fee wallet for ${username} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
+    })
+
     return res.json({message: "success"})
+}
+
+exports.getreferralusername = async (req, res) => {
+    const {id} = req.query
+
+    if (!id){
+        return res.status(401).json({message: "failed", data: "No referral found! Please don't tamper with the URL."})
+    }
+
+    const user = await Users.findOne({_id: new mongoose.Types.ObjectId(id)})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`There's a problem searching user for ${id} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem getting referral, please contact support for more details." })
+    })
+
+    if (!user){
+        console.log(`Referral id does not exist for ${id}`)
+
+        return res.status(400).json({ message: "bad-request", data: "Referral id does not exist, please contact support for more details." })
+    }
+
+    return res.json({message: "success", data: user.username})
+}
+
+exports.logout = async (req, res) => {
+    res.clearCookie('sessionToken', { sameSite: 'None', secure: true })
+    return res.json({message: "success"})
+}
+
+exports.automaticlogin = async (req, res) => {
+    const {auth} = req.user
+
+    return res.json({message: "success", data: {
+        auth: auth
+    }})
 }

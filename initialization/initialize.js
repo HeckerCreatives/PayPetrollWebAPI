@@ -86,29 +86,234 @@ exports.initialize = async () => {
     if(trainer.length <= 0){
         const trainers = [
             {
-            name: "Novice Trainer",
+            name: "Sky",
             min: 500,
             max: 5000,
             profit: 0.15,
             duration: 5,
+            animal: "Bird",
             rank: "Novice"
             },
             {
-            name: "Expert Trainer",
+            name: "Krom", // wrong name
+            min: 500,
+            max: 5000,
+            profit: 0.15,
+            duration: 5,
+            animal: "Cat",
+            rank: "Novice"
+            },
+            {
+            name: "Rocky",
+            min: 500,
+            max: 5000,
+            profit: 0.15,
+            duration: 5,
+            animal: "Dog",
+            rank: "Novice"
+            },
+            {
+            name: "Finn",
+            min: 500,
+            max: 5000,
+            profit: 0.15,
+            duration: 5,
+            animal: "Fish",
+            rank: "Novice"
+            },
+            {
+            name: "Hamster",
+            min: 500,
+            max: 5000,
+            profit: 0.15,
+            duration: 5,
+            animal: "Chip",
+            rank: "Novice"
+            },
+            // Expert
+            {
+            name: "Mango",
             min: 1000,
             max: 20000,
             profit: 0.40,
             duration: 10,
+            animal: "Bird",
             rank: "Expert"
             },
             {
-            name: "Elite Trainer",
+            name: "Luna",
+            min: 1000,
+            max: 20000,
+            profit: 0.40,
+            duration: 10,
+            animal: "Cat",
+            rank: "Expert"
+            },
+            {
+            name: "Max",
+            min: 1000,
+            max: 20000,
+            profit: 0.40,
+            duration: 10,
+            animal: "Dog",
+            rank: "Expert"
+            },
+            {
+            name: "Moby",
+            min: 1000,
+            max: 20000,
+            profit: 0.40,
+            duration: 10,
+            animal: "Fish",
+            rank: "Expert"
+            },
+            {
+            name: "Rusty",
+            min: 1000,
+            max: 20000,
+            profit: 0.40,
+            duration: 10,
+            animal: "Hamster",
+            rank: "Expert"
+            },
+       // Elite     
+            {
+            name: "Chirpy",
             min: 5000,
             max: 50000,
             profit: 3,
             duration: 15,
-            rank: "Elite"
-            }
+            animal: "Bird",
+            rank: "Ace"
+            },
+            {
+            name: "Ash",
+            min: 5000,
+            max: 50000,
+            profit: 3,
+            duration: 15,
+            animal: "Cat",
+            rank: "Ace"
+            },
+            {
+            name: "Rex",
+            min: 5000,
+            max: 50000,
+            profit: 3,
+            duration: 15,
+            animal: "Dog",
+            rank: "Ace"
+            },
+            {
+            name: "Tank",
+            min: 5000,
+            max: 50000,
+            profit: 3,
+            duration: 15,
+            animal: "Fish",
+            rank: "Ace"
+            },
+            {
+            name: "Sugar",
+            min: 5000,
+            max: 50000,
+            profit: 3,
+            duration: 15,
+            animal: "Hamster",
+            rank: "Ace"
+            },
+            // // Ace of Spade
+            // {
+            // name: "Jet",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Bird",
+            // rank: "Ace of Spade"
+            // },
+            // {
+            // name: "Milo",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Cat",
+            // rank: "Ace of Spade"
+            // },
+            // {
+            // name: "Zoey",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Dog",
+            // rank: "Ace of Spade"
+            // },
+            // {
+            // name: "Blob",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Fish",
+            // rank: "Ace of Spade"
+            // },
+            // {
+            // name: "Mochi",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Spiky",
+            // rank: "Ace of Spade"
+            // },
+            // // Ace of Heart
+            // {
+            // name: "Bird",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Tango",
+            // rank: "Ace of Heart"
+            // },
+            // {
+            // name: "Leo",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Cat",
+            // rank: "Ace of Heart"
+            // },
+            // {
+            // name: "Ace",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Dog",
+            // rank: "Ace of Heart"
+            // },
+            // {
+            // name: "Jelly",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Fish",
+            // rank: "Ace of Heart"
+            // },
+            // {
+            // name: "Spiky",
+            // min: 5000,
+            // max: 50000,
+            // profit: 3,
+            // duration: 15,
+            // animal: "Hamster",
+            // rank: "Ace of Heart"
+            // }
         ];
 
         await Trainer.bulkWrite(
