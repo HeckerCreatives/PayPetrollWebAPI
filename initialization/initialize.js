@@ -5,6 +5,7 @@ const Users = require("../models/Users")
 const Userdetails = require("../models/Userdetails")
 const Userwallets = require("../models/Userwallets")
 const StaffUserwallets = require("../models/Staffuserwallets")
+const Maintenance = require("../models/Maintenance")
 
 
 exports.initialize = async () => {
@@ -75,6 +76,29 @@ exports.initialize = async () => {
         })
 
     }
+
+    const maintenancelist = await Maintenance.find()
+    .then(data => data)
+    .catch(err => {
+        console.log("there's a problem getting maintenance list")
+
+        return
+    })
+
+    if (maintenancelist.length <= 0){
+        const maintenancelistdata = ["fightgame", "eventgame", "fullgame", "payout", "moleventgame", "molegame", "fullmolegame", "buyonetakeone"]
+
+        maintenancelistdata.forEach(async maintenancedata => {
+            await Maintenance.create({type: maintenancedata, value: "0"})
+            .catch(err => {
+                console.log(`there's a problem creating maintenance list ${err}`)
+
+                return
+            })
+        })
+        console.log("Maintenance initalized")
+    }
+
 
     const trainer = await Trainer.find()
     .then(data => data)

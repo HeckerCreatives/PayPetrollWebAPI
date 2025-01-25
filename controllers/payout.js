@@ -1,5 +1,61 @@
 const { default: mongoose } = require("mongoose")
 const Payout = require("../models/Payout")
+const { checkmaintenance } = require("../utils/maintenancetools")
+
+exports.requestpayout = async (req, res) => {
+    const {id, username} = req.user
+    const {type, payoutvalue, paymentmethod, accountname, accountnumber} = req.body
+
+    const maintenance = await checkmaintenance("payout")
+
+    if (maintenance == "maintenance"){
+        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from 12:00pm - 11:59pm Friday PST." })
+    }
+
+    else if (maintenance != "success"){
+        return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
+    }
+
+    // const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
+    // .then(data => data)
+
+    // if (exist.length > 0){
+    //     return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
+    // }
+
+    const wallet = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(id), type: type})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting leaderboard data ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+    if (payoutvalue > wallet.amount){
+        return res.status(400).json({ message: "failed", data: "The amount is greater than your wallet balance" })
+    }
+
+    await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id), type: type}, {$inc: {amount: -payoutvalue}})
+    .catch(err => {
+        console.log(`There's a problem deducting payout value for ${username} with value ${payoutvalue}. Error: ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+    await Payout.create({owner: new mongoose.Types.ObjectId(id), status: "processing", value: payoutvalue, type: type, paymentmethod: paymentmethod, accountname: accountname, accountnumber: accountnumber})
+    .catch(async err => {
+
+        await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id), type: type}, {$inc: {amount: payoutvalue}})
+        .catch(err => {
+            console.log(`There's a problem getting leaderboard data ${err}`)
+            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+        })
+
+        console.log(`There's a problem getting leaderboard data ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+    return res.json({message: "success"})
+}
+
 
 exports.getrequesthistoryplayer = async (req, res) => {
     const {id, username} = req.user
