@@ -195,7 +195,10 @@ exports.getinventoryhistory = async (req, res) => {
         }})
     }
 
-    const totalPages = await Inventoryhistory.countDocuments({owner: new mongoose.Types.ObjectId(id), type: type})
+    const totalPages = await Inventoryhistory.countDocuments({
+        owner: new mongoose.Types.ObjectId(id),
+        type: { $regex: type, $options: "i" } 
+    })
     .then(data => data)
     .catch(err => {
 
