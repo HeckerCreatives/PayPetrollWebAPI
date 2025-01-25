@@ -15,6 +15,10 @@ const inventoryShema = new mongoose.Schema(
             type: String,
             index: true // Automatically creates an index on 'amount'
         },
+        price: {
+            type: Number,
+            index: true
+        },
         qty: {
             type: Number
         },
@@ -23,6 +27,13 @@ const inventoryShema = new mongoose.Schema(
         },
         dailyaccumulated: {
             type: Number
+        },
+        duration: {
+            type: Number
+        },
+        startdate: {
+            type: String,
+            index: true // Automatically creates an index on 'amount'
         }
     },
     {

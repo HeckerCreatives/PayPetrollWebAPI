@@ -6,6 +6,7 @@ const routers = app => {
     app.use("/inventory", require("./inventory"))
     app.use("/payout", require("./payout"))
     app.use("/staffuser", require("./staffuser"))
+    app.use("/trainer", require("./trainer"))
     app.use("/unilevel", require("./unilevel"))
     app.use("/user", require("./user"))
     app.use("/wallet", require("./wallet"))
