@@ -6,6 +6,7 @@ const { walletbalance, sendcommissionunilevel, reducewallet } = require("../util
 const { addanalytics } = require("../utils/analyticstools")
 const { DateTimeServerExpiration, DateTimeServer } = require("../utils/datetimetools")
 const Inventoryhistory = require("../models/Inventoryhistory")
+const { addwallethistory } = require("../utils/wallethistorytools")
 exports.buytrainer = async (req, res) => {
     const {id, username} = req.user
     const {type, amount } = req.body
@@ -66,6 +67,55 @@ exports.buytrainer = async (req, res) => {
     return res.json({message: "success"})
 }
 
+exports.claimtotalincome = async (req, res) => {
+    const {id, username} = req.user
+    const {trainerid} = req.body
+
+    if (!trainerid || trainerid == ""){
+        return res.status(400).json({message: "failed", data: "No trainer is selected"})
+    }
+
+    const trainerdb = await Inventory.findOne({_id: new mongoose.Types.ObjectId(trainerid)})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the trainer data for ${username}. Error: ${err}`)
+        
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the trainer data! Please contact customer support"})
+    })
+
+    if (!trainerdb){
+        return res.status(400).json({message: "failed", data: "No trainer is selected"})
+    }
+
+    const trainer = await Trainer.findOne({ name: trainerdb.type, rank: trainerdb.rank})
+
+    const templimit = (trainer.amount * trainer.percentage) + trainer.amount
+
+    if (Math.round(trainerdb.totalaccumulated) < templimit){
+        return res.status(400).json({message: "failed", data: "You still didn't reach the limit of this trainer! keep playing and reach the limit in order to claim"})
+    }
+
+    await addwallet("gamebalance", trainerdb.totalaccumulated, id)
+
+    await Inventory.findOneAndDelete({_id: new mongoose.Types.ObjectId(trainerid)})
+    .catch(async err => {
+        console.log(`There's a problem getting the deleting Trainer data for ${username} Trainer id: ${trainerid}. Error: ${err}`)
+
+        await reducewallet("gamebalance", trainerdb.totalaccumulated, id)
+        
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the finishing Trainer data! Please contact customer support"})
+    })
+
+    const wallethistory = await addwallethistory(id, "gamebalance", trainerdb.totalaccumulated, process.env.PAYPETROLLS_ID, trainer.name, trainer.rank)
+
+    if (wallethistory.message != "success"){
+        return res.status(400).json({message: "bad-request", data: "There's a problem processing your data. Please contact customer support"})
+    }
+
+    await addanalytics(id, wallethistory.data.transactionid, `gamebalance`, `Player ${username} claim ${trainerdb.totalaccumulated} in Trainer ${trainerdb.type}`, trainerdb.totalaccumulated)
+
+    return res.json({message: "success"})
+}
 
 exports.getinventory = async (req, res) => {
     const {id, username} = req.user
@@ -117,7 +167,7 @@ exports.getinventory = async (req, res) => {
 
         data[index] = {
             type: type,
-            creatureid: _id,
+            trainer: _id,
             rank: rank,
             qty: qty,
             totalaccumulated: totalaccumulated,
