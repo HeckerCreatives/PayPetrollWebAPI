@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose")
 const Payout = require("../models/Payout")
 const { checkmaintenance } = require("../utils/maintenancetools")
+const Userwallets = require("../models/Userwallets")
 
 exports.requestpayout = async (req, res) => {
     const {id, username} = req.user
@@ -8,13 +9,13 @@ exports.requestpayout = async (req, res) => {
 
     const maintenance = await checkmaintenance("payout")
 
-    if (maintenance == "maintenance"){
-        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from 12:00pm - 11:59pm Friday PST." })
-    }
+    // if (maintenance == "maintenance"){
+    //     return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from 12:00pm - 11:59pm Friday PST." })
+    // }
 
-    else if (maintenance != "success"){
-        return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
-    }
+    // else if (maintenance != "success"){
+    //     return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
+    // }
 
     // const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
     // .then(data => data)
