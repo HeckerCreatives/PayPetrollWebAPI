@@ -43,7 +43,7 @@ exports.buytrainer = async (req, res) => {
         return res.status(400).json({ message: 'failed', data: `You don't have enough funds to buy this trainer! Please top up first and try again.` })
     }
 
-    const unilevelrewards = await sendcommissionunilevel(amount, id, trainer.name)
+    const unilevelrewards = await sendcommissionunilevel(amount, id, trainer.name, trainer.rank)
 
     if (unilevelrewards != "success"){
         return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })

@@ -36,7 +36,7 @@ exports.reducewallet = async (type, price, id) => {
     return "success"
 }
 
-exports.sendcommissionunilevel = async (commissionAmount, id, creaturename, creaturerank) => {
+exports.sendcommissionunilevel = async (commissionAmount, id, trainername, trainerrank) => {
 
     const pipeline = [
         // Match the sender
@@ -208,12 +208,12 @@ exports.sendcommissionunilevel = async (commissionAmount, id, creaturename, crea
 
         if (level == 0){
 
-            historypipeline.push({owner: new mongoose.Types.ObjectId(_id), type: "directreferralbalance", amount: amount, creaturename: creaturename, creaturerank: creaturerank, from: new mongoose.Types.ObjectId(id)})
+            historypipeline.push({owner: new mongoose.Types.ObjectId(_id), type: "directreferralbalance", amount: amount, trainername: trainername, trainerrank: trainerrank, from: new mongoose.Types.ObjectId(id)})
 
             analyticspipeline.push({owner: new mongoose.Types.ObjectId(_id), type: "directreferralbalance", description: `Unilevel from ${id} to ${_id} with commission total amount of ${commissionAmount} and direct referral amount of ${amount}`, amount: amount})
         }
         else{
-            historypipeline.push({owner: new mongoose.Types.ObjectId(_id), type: "commissionbalance", amount: amount, creaturename: creaturename, creaturerank: creaturerank, from: new mongoose.Types.ObjectId(id)})
+            historypipeline.push({owner: new mongoose.Types.ObjectId(_id), type: "commissionbalance", amount: amount, trainername: trainername, trainerrank: trainerrank, from: new mongoose.Types.ObjectId(id)})
     
             analyticspipeline.push({owner: new mongoose.Types.ObjectId(_id), type: "commissionbalance", description: `Unilevel from ${id} to ${_id} with commission total amount of ${commissionAmount} and commission amount of ${amount}`, amount: amount})
         }
