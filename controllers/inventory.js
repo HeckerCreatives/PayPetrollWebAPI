@@ -213,11 +213,7 @@ exports.getinventory = async (req, res) => {
         index++;
     }
 
-    // Add total pages to the response
-    data["totalPages"] = pages;
-
-    console.log(data);
-
+    
     return res.json({message: "success", data: data, totalpages: pages})
 }
 
