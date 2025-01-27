@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose")
 const Payout = require("../models/Payout")
 const { checkmaintenance } = require("../utils/maintenancetools")
 const Userwallets = require("../models/Userwallets")
+const StaffUserwallets = require("../models/Staffuserwallets")
 
 exports.requestpayout = async (req, res) => {
     const {id, username} = req.user
@@ -110,4 +111,104 @@ exports.getrequesthistoryplayer = async (req, res) => {
     })
 
     return res.json({message: "success", data: data})
+}
+
+
+exports.processpayout = async (req, res) => {
+    const {id, username} = req.user
+    const {payoutid, status} = req.body
+
+    let payoutvalue = 0
+    let playerid = ""
+    let wallettype = ""
+
+    const payoutdata = await Payout.findOne({_id: new mongoose.Types.ObjectId(payoutid)})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`Failed to get Payout data for ${username}, error: ${err}`)
+
+        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+    if (payoutdata.status != "processing"){
+        return res.status(401).json({ message: 'failed', data: `You already processed this payout` })
+    }
+
+    await Payout.findOneAndUpdate({_id: new mongoose.Types.ObjectId(payoutid)}, {status: status, processby: new mongoose.Types.ObjectId(id)}, {new: true})
+    .then(data => {
+        payoutvalue = data.value
+        playerid = data.owner._id
+        wallettype = data.type
+    })
+    .catch(err => {
+
+        console.log(`Failed to count documents Payin data for ${username}, error: ${err}`)
+
+        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+    if (status == "reject"){
+        await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(playerid), type: wallettype}, {$inc: {amount: payoutvalue}})
+        .catch(err => {
+
+            console.log(`Failed to process Payout data for ${username}, player: ${playerid}, payinid: ${payinid} error: ${err}`)
+    
+            return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+        })
+    }
+    else{
+
+        const adminfee = payoutvalue * 0.1
+
+        await StaffUserwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id)}, {$inc: {amount: adminfee}})
+
+        const analyticsadd = await addanalytics(playerid, "", `payout${wallettype}`, `Payout to user ${playerid} with a value of ${payoutvalue} and admin fee of ${adminfee} processed by ${username}`, payoutvalue)
+
+        if (analyticsadd != "success"){
+            return res.status(401).json({ message: 'failed', data: `There's a problem saving payin in analytics history. Please contact customer support for more details` })
+        }
+    }
+
+    return res.json({message: "success"})
+}
+
+exports.deletepayout = async (req, res) => {
+    const {id, username} = req.user
+    const {payoutid} = req.body
+
+    let payoutvalue = 0
+
+    const payoutdata = await Payout.findOne({_id: new mongoose.Types.ObjectId(payoutid)})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`Failed to get Payout data for ${payoutid}, error: ${err}`)
+
+        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+    if (!payoutdata){
+        return res.status(400).json({message: "failed", data: "Please select a valid payout request!"})
+    }
+
+    await Payout.findOneAndDelete({_id: new mongoose.Types.ObjectId(payoutid)})
+    .catch(err => {
+
+        console.log(`Failed to delete Payout data for ${payoutid}, error: ${err}`)
+
+        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+    console.log(`Payout request id: ${payoutdata._id}  owner: ${payoutdata.owner}  type: ${payoutdata.type}  amount: ${payoutdata.value}`)
+
+    await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(payoutdata.owner), type: payoutdata.type}, {$inc: {amount: payoutdata.value}})
+    .catch(err => {
+
+        console.log(`Failed to update userwallet data for ${payoutdata.owner} with value ${payoutdata.value}, error: ${err}`)
+
+        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+    return res.json({message: "success"})
 }
