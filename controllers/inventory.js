@@ -112,6 +112,7 @@ exports.claimtotalincome = async (req, res) => {
     if (wallethistory.message != "success"){
         return res.status(400).json({message: "bad-request", data: "There's a problem processing your data. Please contact customer support"})
     }
+    await saveinventoryhistory(id, `${trainerdb.name}`, trainerdb.rank, `Claim ${trainerdb.name}`, trainerdb.totalaccumulated)
 
     await addanalytics(id, wallethistory.data.transactionid, `gamebalance`, `Player ${username} claim ${trainerdb.totalaccumulated} in Trainer ${trainerdb.type}`, trainerdb.totalaccumulated)
 
