@@ -29,8 +29,6 @@ exports.buytrainer = async (req, res) => {
 
     const trainer = await Trainer.findOne({ name: type })
 
-    const finalprice = trainer.profit
-
     if (amount < trainer.min){
         return res.status(400).json({ message: 'failed', data: `The minimum price for ${trainer.name} is ${trainer.min} pesos`})
     }
@@ -52,7 +50,7 @@ exports.buytrainer = async (req, res) => {
     }
     
 
-    await Inventory.create({owner: new mongoose.Types.ObjectId(id), type: type, qty: 1, startdate: DateTimeServer(), duration: DateTimeServerExpiration(trainer.duration), rank: trainer.rank, totalaccumulated: 0, dailyaccumulated: 0,  price: amount,})
+    await Inventory.create({owner: new mongoose.Types.ObjectId(id), type: type, qty: 1, startdate: DateTimeServer(), duration: trainer.duration, expiration: DateTimeServerExpiration(trainer.duration), rank: trainer.rank, totalaccumulated: 0, dailyaccumulated: 0,  price: amount,})
     .catch(err => {
     
             console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
@@ -199,6 +197,9 @@ exports.getinventory = async (req, res) => {
         }
         const creaturelimit = (parseInt(price) * trainerz.profit) + parseInt(price);
         const limitperday = creaturelimit / trainerz.duration;
+
+        console.log(startdate, duration)
+        console.log(AddUnixtimeDay(startdate, duration))
 
         const earnings = getfarm(startdate, AddUnixtimeDay(startdate, duration), (price * trainerz.profit) + price)
         const remainingtime = RemainingTime(parseFloat(startdate), duration)
