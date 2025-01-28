@@ -1,10 +1,10 @@
 const { default: mongoose } = require("mongoose")
 const Inventory = require("../models/Inventory")
 const Trainer = require("../models/Trainer")
-const { saveinventoryhistory } = require("../utils/inventorytools")
+const { saveinventoryhistory, getfarm } = require("../utils/inventorytools")
 const { walletbalance, sendcommissionunilevel, reducewallet, addwallet } = require("../utils/walletstools")
 const { addanalytics } = require("../utils/analyticstools")
-const { DateTimeServerExpiration, DateTimeServer } = require("../utils/datetimetools")
+const { DateTimeServerExpiration, DateTimeServer, RemainingTime, AddUnixtimeDay } = require("../utils/datetimetools")
 const Inventoryhistory = require("../models/Inventoryhistory")
 const { addwallethistory } = require("../utils/wallethistorytools")
 
@@ -189,7 +189,7 @@ exports.getinventory = async (req, res) => {
     let index = 0
 
     for (const trainers of trainer) {
-        const { _id, type, rank, dailyaccumulated, totalaccumulated, qty, price } = trainers;
+        const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate } = trainers;
 
         const trainerz = await Trainer.findOne({ name: type });
 
@@ -200,15 +200,21 @@ exports.getinventory = async (req, res) => {
         const creaturelimit = (parseInt(price) * trainerz.profit) + parseInt(price);
         const limitperday = creaturelimit / trainerz.duration;
 
+        const earnings = getfarm(startdate, AddUnixtimeDay(startdate, duration), (price * trainerz.profit) + price)
+        const remainingtime = RemainingTime(parseFloat(startdate), duration)
+
         data[index] = {
             type: type,
             trainer: _id,
             rank: rank,
             qty: qty,
+            duration: duration,
             totalaccumulated: totalaccumulated,
             dailyaccumulated: dailyaccumulated,
             limittotal: creaturelimit,
-            limitdaily: limitperday
+            limitdaily: limitperday,
+            earnings: earnings,
+            remainingtime: remainingtime
         };
 
         index++;
