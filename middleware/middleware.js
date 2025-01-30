@@ -178,6 +178,8 @@ exports.protectusers = async (req, res, next) => {
 }
 
 
+
+
 exports.captureIpAddress = async (req, res, next) => {
     req.body.ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     next();

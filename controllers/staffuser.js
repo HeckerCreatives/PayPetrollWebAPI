@@ -40,7 +40,7 @@ exports.getsadashboard = async(req, res) => {
     const productspipeline = [
         {
             $match: {
-                type: "Buy creature"
+                type: { $regex: "^buy$", $options: "i" }
             }
         },
         {
@@ -61,7 +61,7 @@ exports.getsadashboard = async(req, res) => {
 
     data["products"] = products.length > 0 ? products[0].totalAmount : 0
 
-    const commissioned = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(process.env.CREATURESMASH_ID), type: "commissionbalance"})
+    const commissioned = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), type: "commissionbalance"})
     .then(data => data.amount)
     .catch(err => {
 
@@ -72,7 +72,7 @@ exports.getsadashboard = async(req, res) => {
     
     data["commissioned"] = commissioned
 
-    const usercount = await Users.countDocuments({username: { $ne: "creaturesmash"}})
+    const usercount = await Users.countDocuments({username: { $ne: "paypetrolls"}})
     .then(data => data)
     .catch(err => {
 
@@ -163,7 +163,9 @@ exports.getsadashboard = async(req, res) => {
         return res.status(400).json({ message: "bad-request", data: `There's a problem with the server. Please try again later. Error: ${err}` })
     })
 
+
     data["adminfeewallet"] = adminfee.amount;
+
     
     return res.json({message: "success", data: data})
 }
