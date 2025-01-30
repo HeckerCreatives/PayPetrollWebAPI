@@ -1,4 +1,5 @@
 const Analytics = require("../models/Analytics");
+const Payin = require("../models/Payin");
 
 
 exports.getpayingraph = async (req, res) => {
