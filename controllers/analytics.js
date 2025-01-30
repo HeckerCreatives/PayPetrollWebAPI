@@ -175,3 +175,53 @@ exports.getpayingraph = async (req, res) => {
         return res.json({message: "success", data: result});
     }
 }
+
+
+exports.gettotalpayinperday = async (req, res) => {
+    const {id, username} = req.user
+    const {startDate, endDate} = req.query
+
+    const matchStage = {
+        status: "done"
+    };
+
+    // Add startDate conditionally
+    if (startDate) {
+        matchStage.createdAt = { $gte: new Date(startDate) };
+    }
+
+    // Add endDate conditionally
+    if (endDate) {
+        matchStage.createdAt = matchStage.createdAt || {}; // Initialize if not already
+        matchStage.createdAt.$lte = new Date(endDate);
+    }
+
+    const result = await Payin.aggregate([
+        {
+            // Match documents based on provided date range
+            $match: matchStage
+        },
+        {
+            // Project the date to just the day (remove time part)
+            $project: {
+                day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                value: 1
+            }
+        },
+        {
+            // Group by the day and sum the value
+            $group: {
+                _id: "$day",
+                totalValue: { $sum: "$value" }
+            }
+        },
+        {
+            // Sort by date in ascending order
+            $sort: { _id: 1 }
+        }
+    ]);
+
+    return res.json({message: "success", data: {
+        analytics: result
+    }});
+}
