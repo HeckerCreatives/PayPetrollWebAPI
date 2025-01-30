@@ -48,9 +48,27 @@ exports.buytrainer = async (req, res) => {
     if (unilevelrewards != "success"){
         return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
     }
+
+    const totalincome = (trainer.profit * amount) + amount
     
 
-    await Inventory.create({owner: new mongoose.Types.ObjectId(id), type: type, qty: 1, startdate: DateTimeServer(), duration: trainer.duration, expiration: DateTimeServerExpiration(trainer.duration), rank: trainer.rank, totalaccumulated: 0, dailyaccumulated: 0,  price: amount,})
+    await Inventory.create({
+        owner: new mongoose.Types.ObjectId(id), 
+        type: type,
+        startdate: DateTimeServer(), 
+        duration: trainer.duration, 
+        expiration: DateTimeServerExpiration(trainer.duration), 
+        rank: trainer.rank, 
+        totalaccumulated: 0, 
+        dailyaccumulated: 0,
+        totalincome: totalincome,
+        dailyclaim: 0,  
+        price: amount,
+        petname: trainer.name,
+        petclean: 0,
+        petlove: 0,
+        petfeed: 0,
+    })
     .catch(err => {
     
             console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
@@ -92,6 +110,11 @@ exports.claimtotalincome = async (req, res) => {
 
     if (Math.round(trainerdb.totalaccumulated) < templimit){
         return res.status(400).json({message: "failed", data: "You still didn't reach the limit of this trainer! keep playing and reach the limit in order to claim"})
+    }
+    const remainingtime = RemainingTime(parseFloat(trainerdb.startdate), trainerdb.duration)
+
+    if (remainingtime > 0){
+        return res.status(400).json({message: "failed", data: "There are still remaining time before claiming! Wait for the timer to complete."})
     }
 
     await addwallet("gamebalance", trainerdb.totalaccumulated, id)
@@ -150,81 +173,64 @@ exports.gettotalpurchased = async (req, res) => {
 
     return res.json({message: "success", data: finaldata})
 }
+
 exports.getinventory = async (req, res) => {
-    const {id, username} = req.user
-    const {rank, page, limit} = req.query
+    const { id, username } = req.user;
+    const { rank, page, limit } = req.query;
 
     const pageOptions = {
         page: parseInt(page) || 0,
         limit: parseInt(limit) || 10
+    };
+
+    try {
+        const [trainer, totalDocuments] = await Promise.all([
+            Inventory.find({ owner: id, rank: rank })
+                .skip(pageOptions.page * pageOptions.limit)
+                .limit(pageOptions.limit)
+                .sort({ 'createdAt': -1 }),
+            Inventory.countDocuments({ owner: id, rank: rank })
+        ]);
+
+        const pages = Math.ceil(totalDocuments / pageOptions.limit);
+
+        const data = await Promise.all(trainer.map(async (trainers) => {
+            const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate } = trainers;
+
+            const trainerz = await Trainer.findOne({ name: type });
+
+            if (!trainerz) {
+                console.log(`Trainer type ${type} not found for ${username}`);
+                return null; // Skip if no trainer details found
+            }
+
+            const creaturelimit = (parseInt(price) * trainerz.profit) + parseInt(price);
+            const limitperday = creaturelimit / trainerz.duration;
+
+            const earnings = getfarm(startdate, AddUnixtimeDay(startdate, duration), creaturelimit);
+            const remainingtime = RemainingTime(parseFloat(startdate), duration);
+
+            return {
+                type: type,
+                trainer: _id,
+                rank: rank,
+                qty: qty,
+                duration: duration,
+                totalaccumulated: totalaccumulated,
+                dailyaccumulated: dailyaccumulated,
+                limittotal: creaturelimit,
+                limitdaily: limitperday,
+                earnings: earnings,
+                remainingtime: remainingtime
+            };
+        }));
+
+        return res.json({ message: "success", data: data.filter(item => item !== null), totalpages: pages });
+    } catch (err) {
+        console.log(`Failed to get inventory data for ${username}, error: ${err}`);
+        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` });
     }
-
-    const trainer = await Inventory.find({owner: id, rank: rank})
-    .skip(pageOptions.page * pageOptions.limit)
-    .limit(pageOptions.limit)
-    .sort({'createdAt': -1})
-    .then(data => data)
-    .catch(err => {
-
-        console.log(`Failed to get inventory data for ${username}, error: ${err}`)
-
-        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
-
-    const totalPages = await Inventory.countDocuments({owner: id, rank: rank})
-    .then(data => data)
-    .catch(err => {
-
-        console.log(`Failed to count documents inventory data for ${username}, error: ${err}`)
-
-        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
-
-    const pages = Math.ceil(totalPages / pageOptions.limit)
-
-    const data = {}
-
-    let index = 0
-
-    for (const trainers of trainer) {
-        const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate } = trainers;
-
-        const trainerz = await Trainer.findOne({ name: type });
-
-        if (!trainerz) {
-            console.log(`Trainer type ${type} not found for ${username}`);
-            continue; // Skip if no trainer details found
-        }
-        const creaturelimit = (parseInt(price) * trainerz.profit) + parseInt(price);
-        const limitperday = creaturelimit / trainerz.duration;
-
-        console.log(startdate, duration)
-        console.log(AddUnixtimeDay(startdate, duration))
-
-        const earnings = getfarm(startdate, AddUnixtimeDay(startdate, duration), (price * trainerz.profit) + price)
-        const remainingtime = RemainingTime(parseFloat(startdate), duration)
-
-        data[index] = {
-            type: type,
-            trainer: _id,
-            rank: rank,
-            qty: qty,
-            duration: duration,
-            totalaccumulated: totalaccumulated,
-            dailyaccumulated: dailyaccumulated,
-            limittotal: creaturelimit,
-            limitdaily: limitperday,
-            earnings: earnings,
-            remainingtime: remainingtime
-        };
-
-        index++;
-    }
-
-    
-    return res.json({message: "success", data: data, totalpages: pages})
-}
-
+};
 exports.getunclaimedincomeinventory = async (req, res) => {
     const {id, username} = req.user
 

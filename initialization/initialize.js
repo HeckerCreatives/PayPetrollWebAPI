@@ -6,6 +6,7 @@ const Userdetails = require("../models/Userdetails")
 const Userwallets = require("../models/Userwallets")
 const StaffUserwallets = require("../models/Staffuserwallets")
 const Maintenance = require("../models/Maintenance")
+const Leaderboard = require("../models/Leaderboard")
 
 
 exports.initialize = async () => {
@@ -49,6 +50,33 @@ exports.initialize = async () => {
         })
 
         console.log("cs user created")
+
+        
+    }
+    const adminz = await StaffUser.find({ auth: "admin"})
+    .then(data => data)
+    .catch(err => {
+        console.log(`Error finding the admin data: ${err}`)
+        return
+    })
+
+    if(adminz.length <= 0 ){
+        await StaffUser.create({ username: "paypetrolladmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "admin"})
+        .catch(err => {
+            console.log(`Error saving admin data: ${err}`)
+            return
+        }) 
+
+        await StaffUserwallets.create({owner: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), type: "adminfee", amount: 0})
+        .catch(async err => {
+
+            await StaffUser.findOneAndDelete({_id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID)})
+
+            console.log(`There's a problem creating admin fee wallet Error: ${err}`)
+
+            return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
+        })
+
     }
 
     const admin = await StaffUser.find({ auth: "superadmin"})
@@ -59,7 +87,7 @@ exports.initialize = async () => {
     })
 
     if(admin.length <= 0 ){
-        await StaffUser.create({ _id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "paypetrolladmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "superadmin"})
+        await StaffUser.create({ _id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "paypetrollsuperadmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "superadmin"})
         .catch(err => {
             console.log(`Error saving admin data: ${err}`)
             return
@@ -351,6 +379,31 @@ exports.initialize = async () => {
             return
         })
     }
+
+    // initialize leaderboard for existing users
+
+    // const users = await Users.find()
+    // .then(data => data)
+    // .catch(err => {
+    //     console.log(`There's a problem getting users data ${err}`)
+    //     return
+    // })
+
+    // if(users.length > 0){
+    //     users.forEach(async user => {
+    //         const hasleaderboard = await Leaderboard.findOne({owner: new mongoose.Types.ObjectId(user._id)})
+
+    //         if(!hasleaderboard){
+    //         await Leaderboard.create({owner: new mongoose.Types.ObjectId(user._id), amount: 0})
+    //         .catch(err => {
+    //             console.log(`There's a problem creating leaderboard data ${err}`)
+    //             return
+    //         })
+    //         console.log(`Leaderboard for ${user.username} created`)
+    //     }
+
+    //     })
+    // }
 
 
     console.log("SERVER DATA INITIALIZED")

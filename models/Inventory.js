@@ -17,23 +17,37 @@ const inventoryShema = new mongoose.Schema(
         },
         price: {
             type: Number,
+            index: true,
+        },
+        petname: {
+            type: String,
+            index: true,
+        },
+        petclean: {
+            type: Number,
+            index: true,
+        },
+        petlove: {
+            type: Number,
+            index: true,
+        },
+        petfeed: {
+            type: Number,
+            index: true,
+        },
+        dailyclaim: {
+            type: Number,
             index: true
         },
-        qty: {
-            type: Number
+        totalincome: {
+            type: Number,
+            index: true
         },
         totalaccumulated: {
             type: Number
         },
         dailyaccumulated: {
             type: Number
-        },
-        duration: {
-            type: Number
-        },
-        startdate: {
-            type: String,
-            index: true // Automatically creates an index on 'amount'
         }
     },
     {

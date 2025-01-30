@@ -14,6 +14,7 @@ const privateKey = fs.readFileSync(path.resolve(__dirname, "../keys/private-key.
 const { default: mongoose } = require("mongoose");
 const Userwallets = require("../models/Userwallets");
 const StaffUserwallets = require("../models/Staffuserwallets");
+const Leaderboard = require("../models/Leaderboard");
 
 const encrypt = async password => {
     const salt = await bcrypt.genSalt(10);
@@ -116,6 +117,19 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
         })
     })
+
+    await Leaderboard.create({ owner: new mongoose.Types.ObjectId(player._id), amount: 0 })
+    .catch(async err => {
+        
+        await Users.findOneAndDelete({_id: new mongoose.Types.ObjectId(player._id)})
+        await Userdetails.findOneAndDelete({_id: new mongoose.Types.ObjectId(player._id)})
+        await Userwallets.deleteMany({owner: new mongoose.Types.ObjectId(player._id)})
+
+        console.log(`There's a problem creating leaderboard for ${player._id} Error: ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
+    }
+    )
+    
 
 
     return res.json({message: "success"})
