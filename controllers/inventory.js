@@ -330,55 +330,51 @@ exports.getplayerinventoryforadmin = async (req, res) => {
         limit: parseInt(limit) || 10
     }
 
-    const trainer = await Inventory.find({owner: playerid})
-    .populate({
-        path: "owner",
-        select: "username -_id"
-    })
-    .skip(pageOptions.page * pageOptions.limit)
-    .limit(pageOptions.limit)
-    .sort({'createdAt': -1})
-    .then(data => data)
-    .catch(err => {
+    try {
+        const [trainer, totalDocuments] = await Promise.all([
+            Inventory.find({ owner: new mongoose.Types.ObjectId(playerid) })
+                .skip(pageOptions.page * pageOptions.limit)
+                .limit(pageOptions.limit)
+                .sort({ 'createdAt': -1 }),
+            Inventory.countDocuments({ owner: id, rank: rank })
+        ]);
 
-        console.log(`Failed to get inventory data for ${username}, error: ${err}`)
+        const pages = Math.ceil(totalDocuments / pageOptions.limit);
 
-        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
+        const data = await Promise.all(trainer.map(async (trainers) => {
+            const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate } = trainers;
 
-    const totalPages = await Inventory.countDocuments({owner: playerid, rank: rank})
-    .then(data => data)
-    .catch(err => {
+            const trainerz = await Trainer.findOne({ name: type });
 
-        console.log(`Failed to count documents inventory data for ${username}, error: ${err}`)
+            if (!trainerz) {
+                console.log(`Trainer type ${type} not found for ${username}`);
+                return null; // Skip if no trainer details found
+            }
 
-        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
+            const creaturelimit = (parseInt(price) * trainerz.profit) + parseInt(price);
+            const limitperday = creaturelimit / trainerz.duration;
 
-    const pages = Math.ceil(totalPages / pageOptions.limit)
-    let data = {}
+            const earnings = getfarm(startdate, AddUnixtimeDay(startdate, duration), creaturelimit);
+            const remainingtime = RemainingTime(parseFloat(startdate), duration);
 
-    if (rank == "Novice" || rank == "Expert" || rank == "Ace"){
-        data = {
-            Novice: [],
-            Expert: [],
-            Ace: [],
-            totalPages: pages
-        }
+            return {
+                type: type,
+                trainer: _id,
+                rank: rank,
+                qty: qty,
+                duration: duration,
+                totalaccumulated: totalaccumulated,
+                dailyaccumulated: dailyaccumulated,
+                limittotal: creaturelimit,
+                limitdaily: limitperday,
+                earnings: earnings,
+                remainingtime: remainingtime
+            };
+        }));
+
+        return res.json({ message: "success", data: data.filter(item => item !== null), totalpages: pages });
+    } catch (err) {
+        console.log(`Failed to get inventory data for ${username}, error: ${err}`);
+        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` });
     }
-
-    trainer.forEach(datatrainer => {
-        const {type, rank, dailyaccumulated, totalaccumulated, qty} = datatrainer
-        
-        data[rank].push({
-            type: type,
-            qty: qty,
-            dailyaccumulated: dailyaccumulated,
-            totalaccumulated: totalaccumulated
-        })
-    })
-
-    data["totalPages"] = pages
-
-    return res.json({message: "success", data: data})
 }
