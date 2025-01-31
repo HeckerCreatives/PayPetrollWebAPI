@@ -205,15 +205,22 @@ exports.searchplayerlist = async (req, res) => {
 }
 
 exports.getplayerlist = async (req, res) => {
-    const {id, username} = req.user
-    const {page, limit} = req.query
+    const { id, username } = req.user;
+    const { page, limit, search } = req.query;
 
     const pageOptions = {
         page: parseInt(page) || 0,
         limit: parseInt(limit) || 10
     };
 
+    const matchStage = search ? {
+        $match: {
+            username: { $regex: search, $options: "i" }
+        }
+    } : {};
+
     const userlistpipeline = [
+        matchStage,
         {
             $facet: {
                 totalCount: [
@@ -256,38 +263,34 @@ exports.getplayerlist = async (req, res) => {
                 ]
             }
         }
-    ]
+    ];
 
     const userlist = await Users.aggregate(userlistpipeline)
-    .catch(err => {
-
-        console.log(`There's a problem getting users list for ${username} Error: ${err}`)
-
-        return res.status(400).json({ message: "bad-request", data: "There's a problem getting you user details. Please contact customer support." })
-    })
+        .catch(err => {
+            console.log(`There's a problem getting users list for ${username} Error: ${err}`);
+            return res.status(400).json({ message: "bad-request", data: "There's a problem getting your user details. Please contact customer support." });
+        });
 
     const data = {
         totalPages: Math.ceil(userlist[0].totalCount[0].total / pageOptions.limit),
         userlist: []
-    }
+    };
 
     userlist[0].data.forEach(value => {
-        const {_id, username, status, createdAt, phonenumber, referralUsername} = value
+        const { _id, username, status, createdAt, phonenumber, referralUsername } = value;
 
-        data["userlist"].push(
-            {
-                id: _id,
-                username: username,
-                phonenumber: phonenumber,
-                referralUsername: referralUsername,
-                status: status,
-                createdAt: createdAt
-            }
-        )
-    })
+        data["userlist"].push({
+            id: _id,
+            username: username,
+            phonenumber: phonenumber,
+            referralUsername: referralUsername,
+            status: status,
+            createdAt: createdAt
+        });
+    });
 
-    return res.json({message: "success", data: data})
-}
+    return res.json({ message: "success", data: data });
+};
 
 exports.banunbanuser = async (req, res) => {
     const {id, username} = req.user
@@ -332,4 +335,36 @@ exports.multiplebanusers = async (req, res) => {
     })
 
     return res.json({message: "success"})
+}
+
+exports.getplayercount = async (req, res) => {
+    const {id, username} = req.user
+
+    const totalusers = await Users.countDocuments()
+    .then(data => data)
+
+    const activeusers = await Payin.aggregate([
+        {
+            $match: { status: "done" } // Filter payins with status "done"
+        },
+        {
+            $group: {
+                _id: "$owner", // Group by user ID (owner)
+            }
+        },
+        {
+            $count: "totalUsers" // Count the number of unique users
+        }
+    ]);
+
+    const banusers = await Users.countDocuments({status: "banned"})
+    .then(data => data)
+
+    data = {
+        totalusers: totalusers,
+        activeusers: activeusers.length > 0 ? activeusers[0].totalUsers : 0,
+        banusers: banusers
+    }
+
+    return res.json({message: "success", data: data})
 }
