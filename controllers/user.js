@@ -361,8 +361,6 @@ exports.getplayercount = async (req, res) => {
     // ]);
 
     const activeusers = await Users.countDocuments({status: "active"})
-    .then(data => data)
-
     const banusers = await Users.countDocuments({status: "banned"})
     .then(data => data)
 
