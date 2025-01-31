@@ -414,7 +414,7 @@ exports.getproductgraph = async (req, res) => {
         const hourlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^Buy$/, $options: "i" },
+                    type: { $regex: /^Buy/, $options: "i" }, // Updated regex pattern
                     createdAt: {
                         $gte: startOfDay,
                         $lt: endOfDay
@@ -458,7 +458,7 @@ exports.getproductgraph = async (req, res) => {
         const weeklyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^Buy$/, $options: "i" },
+                    type: { $regex: /^Buy/, $options: "i" }, // Updated regex pattern
                     createdAt: {
                         $gte: startOfWeek,
                         $lt: endOfWeek
@@ -499,7 +499,7 @@ exports.getproductgraph = async (req, res) => {
         const monthlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^Buy$/, $options: "i" },
+                    type: { $regex: /^Buy/, $options: "i" }, // Updated regex pattern
                     createdAt: {
                         $gte: startOfYear,
                         $lt: endOfYear
@@ -543,7 +543,7 @@ exports.getproductgraph = async (req, res) => {
         const yearlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^Buy$/, $options: "i" }
+                    type: { $regex: /^Buy/, $options: "i" } // Updated regex pattern
                 }
             },
             {
@@ -589,7 +589,7 @@ exports.getearningpayoutgraph = async (req, res) => {
         const hourlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^payoutgamebalance$/, $options: "i" },
+                    type: "payoutgamebalance",
                     createdAt: {
                         $gte: startOfDay,
                         $lt: endOfDay
@@ -633,7 +633,7 @@ exports.getearningpayoutgraph = async (req, res) => {
         const weeklyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^payoutgamebalance$/, $options: "i" },
+                    type: "payoutgamebalance",
                     createdAt: {
                         $gte: startOfWeek,
                         $lt: endOfWeek
@@ -674,7 +674,7 @@ exports.getearningpayoutgraph = async (req, res) => {
         const monthlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^payoutgamebalance$/, $options: "i" },
+                    type: "payoutgamebalance",
                     createdAt: {
                         $gte: startOfYear,
                         $lt: endOfYear
@@ -718,7 +718,7 @@ exports.getearningpayoutgraph = async (req, res) => {
         const yearlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^payoutgamebalance$/, $options: "i" },
+                    type: "payoutgamebalance",
                 }
             },
             {
@@ -764,7 +764,7 @@ exports.getunilevelpayoutgraph = async (req, res) => {
         const hourlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^payoutcommissionbalance$/, $options: "i" },
+                    type: "payoutcommissionbalance",
                     createdAt: {
                         $gte: startOfDay,
                         $lt: endOfDay
@@ -808,7 +808,7 @@ exports.getunilevelpayoutgraph = async (req, res) => {
         const weeklyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^payoutcommissionbalance$/, $options: "i" },
+                    type: "payoutcommissionbalance",
                     createdAt: {
                         $gte: startOfWeek,
                         $lt: endOfWeek
@@ -849,7 +849,7 @@ exports.getunilevelpayoutgraph = async (req, res) => {
         const monthlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^payoutcommissionbalance$/, $options: "i" },
+                    type: "payoutcommissionbalance",
                     createdAt: {
                         $gte: startOfYear,
                         $lt: endOfYear
@@ -893,7 +893,7 @@ exports.getunilevelpayoutgraph = async (req, res) => {
         const yearlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: { $regex: /^payoutcommissionbalance$/, $options: "i" },
+                    type: "payoutcommissionbalance",
                 }
             },
             {
@@ -930,7 +930,7 @@ exports.getreferrallinkstatus = async (req, res) => {
 
     const referrallink = await Analytics.find({
         owner: new mongoose.Types.ObjectId(id), 
-        type: { $regex: /^Buy/, $options: "i" } 
+        type: { $regex: /^Buy/, $options: "i"  }    
     })
     .then(data => data)
     .catch(err => {
