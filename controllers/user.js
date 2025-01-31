@@ -303,3 +303,33 @@ exports.banunbanuser = async (req, res) => {
 
     return res.json({message: "success"})
 }
+
+exports.multiplebanusers = async (req, res) => {
+    const {id, username} = req.user;
+    const {userlist, status} = req.body
+
+    const data = [];
+
+    userlist.forEach(tempdata => {
+        const {userid, banreason} = tempdata
+        data.push({
+            updateOne: {
+                filter: { _id: new mongoose.Types.ObjectId(userid) },
+                update: { status: status, banreason: banreason }
+            }
+        })
+    })
+
+    if (data.length <= 0){
+        return res.json({message: "success"})
+    }
+
+    await Users.bulkWrite(data)
+    .catch(err => {
+        console.log(`There's a problem setting status to ${status} to the users. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: `There's a problem setting status to ${status} to the users`})
+    })
+
+    return res.json({message: "success"})
+}

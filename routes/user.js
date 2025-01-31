@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { getuserdetails, updateuserprofile, getreferrallink, changepassworduser, changepassworduserforadmin, getuserdetailssuperadmin, searchplayerlist, getplayerlist, banunbanuser } = require("../controllers/user")
+const { getuserdetails, updateuserprofile, getreferrallink, changepassworduser, changepassworduserforadmin, getuserdetailssuperadmin, searchplayerlist, getplayerlist, banunbanuser, multiplebanusers } = require("../controllers/user")
 const { protectplayer, protectsuperadmin } = require("../middleware/middleware")
 
 router
@@ -12,8 +12,8 @@ router
     .get("/searchplayerlist", protectsuperadmin, searchplayerlist)
     .post("/banunbanuser", protectsuperadmin, banunbanuser)
     .get("/getplayerlist", protectsuperadmin, getplayerlist)
+    .post("/multiplebanusers", protectsuperadmin, multiplebanusers)
 
     // .get("/getplayercount", protectsuperadmin, getplayercount)
-    // .post("/multiplebanusers", protectsuperadmin, multiplebanusers)
 
 module.exports = router;

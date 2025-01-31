@@ -405,6 +405,24 @@ exports.initialize = async () => {
     //     })
     // }
 
+    // const usersWithoutGameId = await Users.find({ gameid: { $exists: false } });
+
+    //     for (const user of usersWithoutGameId) {
+    //         let unique = false;
+    //         while (!unique) {
+    //             const gameid = Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Generate a 10-digit number
+    //             const existingUser = await Users.findOne({ gameid });
+    //             if (!existingUser) {
+    //                 user.gameid = gameid;
+    //                 unique = true;
+    //             }
+    //         }
+    //         await user.save();
+    //         console.log(`Game ID ${user.gameid} assigned to user ${user.username}`);
+    //     }
+
+    //     console.log("Game ID initialization complete.");
+
 
     console.log("SERVER DATA INITIALIZED")
 }
