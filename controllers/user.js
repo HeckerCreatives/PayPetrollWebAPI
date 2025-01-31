@@ -131,7 +131,6 @@ exports.updateuserprofile = async (req, res) => {
 }
 
 
-
 exports.searchplayerlist = async (req, res) => {
     const {id, username} = req.user
     const {playerusername, page, limit} = req.query
@@ -203,4 +202,104 @@ exports.searchplayerlist = async (req, res) => {
 
     return res.json({message: "success", data: data})
 
+}
+
+exports.getplayerlist = async (req, res) => {
+    const {id, username} = req.user
+    const {page, limit} = req.query
+
+    const pageOptions = {
+        page: parseInt(page) || 0,
+        limit: parseInt(limit) || 10
+    };
+
+    const userlistpipeline = [
+        {
+            $facet: {
+                totalCount: [
+                    {
+                        $count: "total"
+                    }
+                ],
+                data: [
+                    {
+                        $lookup: {
+                            from: "userdetails", // Assuming the collection name for UserDetails is "userdetails"
+                            localField: "_id",
+                            foreignField: "owner",
+                            as: "userDetails"
+                        }
+                    },
+                    {
+                        $lookup: {
+                            from: "users", // Assuming the collection name for Users is "users"
+                            localField: "referral",
+                            foreignField: "_id",
+                            as: "referredUser"
+                        }
+                    },
+                    {
+                        $project: {
+                            username: 1,
+                            phonenumber: { $arrayElemAt: ["$userDetails.phonenumber", 0] },
+                            referralUsername: { $arrayElemAt: ["$referredUser.username", 0] },
+                            createdAt: 1,
+                            status: 1
+                        }
+                    },
+                    {
+                        $skip: pageOptions.page * pageOptions.limit
+                    },
+                    {
+                        $limit: pageOptions.limit
+                    }
+                ]
+            }
+        }
+    ]
+
+    const userlist = await Users.aggregate(userlistpipeline)
+    .catch(err => {
+
+        console.log(`There's a problem getting users list for ${username} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem getting you user details. Please contact customer support." })
+    })
+
+    const data = {
+        totalPages: Math.ceil(userlist[0].totalCount[0].total / pageOptions.limit),
+        userlist: []
+    }
+
+    userlist[0].data.forEach(value => {
+        const {_id, username, status, createdAt, phonenumber, referralUsername} = value
+
+        data["userlist"].push(
+            {
+                id: _id,
+                username: username,
+                phonenumber: phonenumber,
+                referralUsername: referralUsername,
+                status: status,
+                createdAt: createdAt
+            }
+        )
+    })
+
+    return res.json({message: "success", data: data})
+}
+
+exports.banunbanuser = async (req, res) => {
+    const {id, username} = req.user
+    const {status, userid} = req.body
+
+    await Users.findOneAndUpdate({_id: new mongoose.Types.ObjectId(userid)}, {status: status})
+    .catch(err => {
+
+        console.log(`There's a problem banning or unbanning user for ${username}, player: ${userid}, status: ${status} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem getting your user details. Please contact customer support." })
+    })
+
+    return res.json({message: "success"})
 }

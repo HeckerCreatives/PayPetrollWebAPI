@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { getsadashboard, getadminlist, updateadmin, multiplebanstaffusers, getadmindashboard, searchadminlist, changepass } = require("../controllers/staffuser")
+const { getsadashboard, getadminlist, updateadmin, multiplebanstaffusers, getadmindashboard, searchadminlist, changepass, banunbanuser } = require("../controllers/staffuser")
 const { protectsuperadmin, protectadmin } = require("../middleware/middleware")
 
 router
@@ -11,5 +11,6 @@ router
     .post("/multiplebanstaffusers", protectsuperadmin, multiplebanstaffusers)
     .post("/changepasssuperadmin", protectsuperadmin, changepass)
     .post("/changepasadmin", protectadmin, changepass)
+    .post("/banunbanuser", protectsuperadmin, banunbanuser)
 
 module.exports = router;
