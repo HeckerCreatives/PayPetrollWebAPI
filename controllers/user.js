@@ -213,14 +213,17 @@ exports.getplayerlist = async (req, res) => {
         limit: parseInt(limit) || 10
     };
 
-    const matchStage = search ? {
-        $match: {
-            username: { $regex: search, $options: "i" }
-        }
-    } : {};
+    const userlistpipeline = [];
 
-    const userlistpipeline = [
-        matchStage,
+    if (search) {
+        userlistpipeline.push({
+            $match: {
+                username: { $regex: search, $options: "i" }
+            }
+        });
+    }
+
+    userlistpipeline.push(
         {
             $facet: {
                 totalCount: [
@@ -263,7 +266,7 @@ exports.getplayerlist = async (req, res) => {
                 ]
             }
         }
-    ];
+    );
 
     const userlist = await Users.aggregate(userlistpipeline)
         .catch(err => {
