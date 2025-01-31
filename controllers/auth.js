@@ -141,6 +141,8 @@ exports.authlogin = async(req, res) => {
 
     Users.findOne({ username: { $regex: new RegExp('^' + username + '$', 'i') } })
     .then(async user => {
+
+        console.log('passed here 1')
         if (user && (await user.matchPassword(password))){
             if (user.status != "active"){
                 return res.status(401).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });

@@ -343,7 +343,7 @@ exports.getplayerinventoryforadmin = async (req, res) => {
 
         const data = await Promise.all(trainer.map(async (trainers) => {
             const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate } = trainers;
-
+            console.log(trainers, price, totalaccumulated, dailyaccumulated, startdate, rank, type)
             const trainerz = await Trainer.findOne({ name: type });
 
             if (!trainerz) {

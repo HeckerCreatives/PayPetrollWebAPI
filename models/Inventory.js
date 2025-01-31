@@ -48,6 +48,10 @@ const inventoryShema = new mongoose.Schema(
         },
         dailyaccumulated: {
             type: Number
+        },
+        startdate: {
+            type: String,
+            
         }
     },
     {

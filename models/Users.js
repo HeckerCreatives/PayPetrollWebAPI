@@ -5,7 +5,7 @@ const UsersSchema = new mongoose.Schema(
     {
         username: {
             type: String,
-            index: true // Automatically creates an index on 'username'
+            index: true // Automatically creates an index on 'amount'
         },
         password: {
             type: String
@@ -13,7 +13,7 @@ const UsersSchema = new mongoose.Schema(
         referral: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Users",
-            index: true // Automatically creates an index on 'referral'
+            index: true // Automatically creates an index on 'amount'
         },
         gametoken: {
             type: String
@@ -33,33 +33,16 @@ const UsersSchema = new mongoose.Schema(
         status: {
             type: String,
             default: "active",
-            index: true // Automatically creates an index on 'status'
-        },
-        gameid: {
-            type: String,
-            unique: true // Ensure the game ID is unique
+            index: true // Automatically creates an index on 'amount'
         }
     },
     {
         timestamps: true
     }
-);
+)
 
 UsersSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) {
-        return next();
-    }
 
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-        next();
-    } catch (err) {
-        return next(err);
-    }
-});
-
-UsersSchema.pre("save", async function (next) {
     if (this.isNew) {
         let unique = false;
         while (!unique) {
@@ -71,8 +54,18 @@ UsersSchema.pre("save", async function (next) {
             }
         }
     }
-    next();
-});
+    if (!this.isModified){
+        next();
+    }
+
+    this.password = await bcrypt.hashSync(this.password, 10)
+})
+
+
+
+UsersSchema.methods.matchPassword = async function(password){
+    return await bcrypt.compare(password, this.password)
+}
 
 const Users = mongoose.model("Users", UsersSchema)
 module.exports = Users
