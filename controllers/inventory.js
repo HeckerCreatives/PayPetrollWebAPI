@@ -336,7 +336,7 @@ exports.getplayerinventoryforadmin = async (req, res) => {
                 .skip(pageOptions.page * pageOptions.limit)
                 .limit(pageOptions.limit)
                 .sort({ 'createdAt': -1 }),
-            Inventory.countDocuments({ owner: id, rank: rank })
+            Inventory.countDocuments({ owner: id })
         ]);
 
         const pages = Math.ceil(totalDocuments / pageOptions.limit);
