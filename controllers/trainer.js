@@ -36,7 +36,7 @@ exports.getTrainers = async(req, res)=> {
 
 exports.edittrainer = async (req, res) => {
 
-    const { trainerid, profit, duration } = req.body
+    const { trainerid, profit, duration, min, max } = req.body
 
     if(!trainerid || !profit || !duration){
         return res.status(400).json({ message: "failed", data: "Incomplete form data."})
@@ -49,7 +49,9 @@ exports.edittrainer = async (req, res) => {
         {
             $set: {
                 profit: parseFloat(profit) , 
-                duration: parseFloat(duration)
+                duration: parseFloat(duration),
+                min: parseFloat(min),
+                max: parseFloat(max)
             }
         }
     )
