@@ -323,14 +323,14 @@ exports.getinventoryhistory = async (req, res) => {
 
 exports.getplayerinventoryforadmin = async (req, res) => {
     const {id, username} = req.user
-    const {playerid, rank, page, limit} = req.query
+    const {playerid, page, limit} = req.query
 
     const pageOptions = {
         page: parseInt(page) || 0,
         limit: parseInt(limit) || 10
     }
 
-    const trainer = await Inventory.find({owner: playerid, rank: rank})
+    const trainer = await Inventory.find({owner: playerid})
     .populate({
         path: "owner",
         select: "username -_id"

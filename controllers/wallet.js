@@ -23,3 +23,32 @@ exports.playerwallets = async (req, res) => {
 
     return res.json({message: "success", data: data})
 }
+
+exports.getplayerwalletforadmin = async (req, res) => {
+    const {id, username} = req.user
+    const {playerid} = req.query
+
+    const playerwallet = await Userwallets.find({owner: new mongoose.Types.ObjectId(playerid)})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`There's a problem getting user wallet for ${username}, player: ${playerid}, Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem getting your user details. Please contact customer support." })
+    })
+
+    const data = {
+        userwallets: []
+    }
+
+    playerwallet.forEach(value => {
+        const {type, amount} = value
+
+        data.userwallets.push({
+            type: type,
+            amount: amount
+        })
+    })
+
+    return res.json({message: "success", data: data})
+}
