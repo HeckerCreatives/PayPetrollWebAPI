@@ -1,7 +1,6 @@
 const Analytics = require("../models/Analytics");
 const Payin = require("../models/Payin");
 
-
 exports.getpayingraph = async (req, res) => {
     const { id, username } = req.user;
     const { charttype } = req.query;
@@ -16,7 +15,7 @@ exports.getpayingraph = async (req, res) => {
         const hourlyAmounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: "payinfiatbalance",
+                    type: { $regex: /^payinfiatbalance$/, $options: "i" },
                     createdAt: {
                         $gte: startOfDay,
                         $lt: endOfDay
@@ -60,7 +59,7 @@ exports.getpayingraph = async (req, res) => {
         const weeklyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: "payinfiatbalance",
+                    type: { $regex: /^payinfiatbalance$/, $options: "i" },
                     createdAt: {
                         $gte: startOfWeek,
                         $lt: endOfWeek
@@ -101,7 +100,7 @@ exports.getpayingraph = async (req, res) => {
         const monthlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: "payinfiatbalance",
+                    type: { $regex: /^payinfiatbalance$/, $options: "i" },
                     createdAt: {
                         $gte: startOfYear,
                         $lt: endOfYear
@@ -145,7 +144,7 @@ exports.getpayingraph = async (req, res) => {
         const yearlyCounts = await Analytics.aggregate([
             {
                 $match: {
-                    type: "payinfiatbalance",
+                    type: { $regex: /^payinfiatbalance$/, $options: "i" },
                 }
             },
             {
@@ -176,7 +175,6 @@ exports.getpayingraph = async (req, res) => {
         return res.json({message: "success", data: result});
     }
 }
-
 
 exports.gettotalpayinperday = async (req, res) => {
     const {id, username} = req.user
@@ -225,4 +223,729 @@ exports.gettotalpayinperday = async (req, res) => {
     return res.json({message: "success", data: {
         analytics: result
     }});
+}
+
+exports.getcommissiongraph = async (req, res) => {
+    const {id, username} = req.user
+    const {charttype} = req.query
+
+    if (charttype == "daily"){
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+    
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const hourlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^commissionbalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfDay,
+                        $lt: endOfDay
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $hour: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        const result = {};
+        for (let i = 0; i < 24; i++) {
+            const hour = i.toString().padStart(2, '0') + ":00";
+            result[hour] = 0;
+        }
+
+        hourlyCounts.forEach(item => {
+            const hour = item._id.toString().padStart(2, '0') + ":00";
+            result[hour] = item.count;
+        });
+
+        return res.json({message: "success", data: result})
+    }
+    else if (charttype == "weekly"){
+        const startOfWeek = new Date();
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        // Aggregate user counts by day of the week
+        const weeklyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^commissionbalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfWeek,
+                        $lt: endOfWeek
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dayOfWeek: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const result = {};
+
+        daysOfWeek.forEach(day => {
+            result[day] = 0;
+        });
+
+        weeklyCounts.forEach(item => {
+            const dayOfWeek = daysOfWeek[item._id - 1]; // MongoDB returns 1 for Sunday, 2 for Monday, etc.
+            result[dayOfWeek] = item.count;
+        });
+
+        return res.json({message: "success", data: result});
+    }
+    else if (charttype == "monthly"){
+        const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+        const endOfYear = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
+
+        // Aggregate user counts by month
+        const monthlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^commissionbalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfYear,
+                        $lt: endOfYear
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const months = [
+            "january", "february", "march", "april", "may", "june",
+            "july", "august", "september", "october", "november", "december"
+        ];
+        const result = {};
+
+        months.forEach(month => {
+            result[month] = 0;
+        });
+
+        monthlyCounts.forEach(item => {
+            const monthName = months[item._id - 1]; // MongoDB returns 1 for January, 2 for February, etc.
+            result[monthName] = item.count;
+        });
+
+        return res.json({message: "success", data: result});
+    }
+    else if (charttype == "yearly"){
+        const releaseYear = 2025;
+        const currentYear = new Date().getFullYear();
+
+        // Aggregate user counts by year
+        const yearlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^commissionbalance$/, $options: "i" }
+                }
+            },
+            {
+                $group: {
+                    _id: { $year: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const result = {};
+
+        for (let year = releaseYear; year <= currentYear; year++) {
+            result[year] = 0;
+        }
+
+        yearlyCounts.forEach(item => {
+            const year = item._id;
+            if (year >= releaseYear && year <= currentYear) {
+                result[year] = item.count;
+            }
+        });
+        
+        return res.json({message: "success", data: result});
+    }
+}
+
+exports.getproductgraph = async (req, res) => {
+    const {id, username} = req.user
+    const {charttype} = req.query
+    
+    if (charttype == "daily"){
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+    
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const hourlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^Buy$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfDay,
+                        $lt: endOfDay
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $hour: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        const result = {};
+        for (let i = 0; i < 24; i++) {
+            const hour = i.toString().padStart(2, '0') + ":00";
+            result[hour] = 0;
+        }
+
+        hourlyCounts.forEach(item => {
+            const hour = item._id.toString().padStart(2, '0') + ":00";
+            result[hour] = item.count;
+        });
+
+        return res.json({message: "success", data: result})
+    }
+    else if (charttype == "weekly"){
+        const startOfWeek = new Date();
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        // Aggregate user counts by day of the week
+        const weeklyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^Buy$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfWeek,
+                        $lt: endOfWeek
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dayOfWeek: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const result = {};
+
+        daysOfWeek.forEach(day => {
+            result[day] = 0;
+        });
+
+        weeklyCounts.forEach(item => {
+            const dayOfWeek = daysOfWeek[item._id - 1]; // MongoDB returns 1 for Sunday, 2 for Monday, etc.
+            result[dayOfWeek] = item.count;
+        });
+
+        return res.json({message: "success", data: result});
+    }
+    else if (charttype == "monthly"){
+        const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+        const endOfYear = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
+
+        // Aggregate user counts by month
+        const monthlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^Buy$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfYear,
+                        $lt: endOfYear
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const months = [
+            "january", "february", "march", "april", "may", "june",
+            "july", "august", "september", "october", "november", "december"
+        ];
+        const result = {};
+
+        months.forEach(month => {
+            result[month] = 0;
+        });
+
+        monthlyCounts.forEach(item => {
+            const monthName = months[item._id - 1]; // MongoDB returns 1 for January, 2 for February, etc.
+            result[monthName] = item.count;
+        });
+
+        return res.json({message: "success", data: result});
+    }
+    else if (charttype == "yearly"){
+        const releaseYear = 2024;
+        const currentYear = new Date().getFullYear();
+
+        // Aggregate user counts by year
+        const yearlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^Buy$/, $options: "i" }
+                }
+            },
+            {
+                $group: {
+                    _id: { $year: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const result = {};
+
+        for (let year = releaseYear; year <= currentYear; year++) {
+            result[year] = 0;
+        }
+
+        yearlyCounts.forEach(item => {
+            const year = item._id;
+            if (year >= releaseYear && year <= currentYear) {
+                result[year] = item.count;
+            }
+        });
+        
+        return res.json({message: "success", data: result});
+    }
+}
+
+exports.getearningpayoutgraph = async (req, res) => {
+    const {id, username} = req.user
+    const {charttype} = req.query
+    
+    if (charttype == "daily"){
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+    
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const hourlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^payoutgamebalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfDay,
+                        $lt: endOfDay
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $hour: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        const result = {};
+        for (let i = 0; i < 24; i++) {
+            const hour = i.toString().padStart(2, '0') + ":00";
+            result[hour] = 0;
+        }
+
+        hourlyCounts.forEach(item => {
+            const hour = item._id.toString().padStart(2, '0') + ":00";
+            result[hour] = item.count;
+        });
+
+        return res.json({message: "success", data: result})
+    }
+    else if (charttype == "weekly"){
+        const startOfWeek = new Date();
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        // Aggregate user counts by day of the week
+        const weeklyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^payoutgamebalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfWeek,
+                        $lt: endOfWeek
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dayOfWeek: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const result = {};
+
+        daysOfWeek.forEach(day => {
+            result[day] = 0;
+        });
+
+        weeklyCounts.forEach(item => {
+            const dayOfWeek = daysOfWeek[item._id - 1]; // MongoDB returns 1 for Sunday, 2 for Monday, etc.
+            result[dayOfWeek] = item.count;
+        });
+
+        return res.json({message: "success", data: result});
+    }
+    else if (charttype == "monthly"){
+        const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+        const endOfYear = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
+
+        // Aggregate user counts by month
+        const monthlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^payoutgamebalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfYear,
+                        $lt: endOfYear
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const months = [
+            "january", "february", "march", "april", "may", "june",
+            "july", "august", "september", "october", "november", "december"
+        ];
+        const result = {};
+
+        months.forEach(month => {
+            result[month] = 0;
+        });
+
+        monthlyCounts.forEach(item => {
+            const monthName = months[item._id - 1]; // MongoDB returns 1 for January, 2 for February, etc.
+            result[monthName] = item.count;
+        });
+
+        return res.json({message: "success", data: result});
+    }
+    else if (charttype == "yearly"){
+        const releaseYear = 2024;
+        const currentYear = new Date().getFullYear();
+
+        // Aggregate user counts by year
+        const yearlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^payoutgamebalance$/, $options: "i" },
+                }
+            },
+            {
+                $group: {
+                    _id: { $year: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const result = {};
+
+        for (let year = releaseYear; year <= currentYear; year++) {
+            result[year] = 0;
+        }
+
+        yearlyCounts.forEach(item => {
+            const year = item._id;
+            if (year >= releaseYear && year <= currentYear) {
+                result[year] = item.count;
+            }
+        });
+        
+        return res.json({message: "success", data: result});
+    }
+}
+
+exports.getunilevelpayoutgraph = async (req, res) => {
+    const {id, username} = req.user
+    const {charttype} = req.query
+    
+    if (charttype == "daily"){
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+    
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const hourlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^payoutcommissionbalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfDay,
+                        $lt: endOfDay
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $hour: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        const result = {};
+        for (let i = 0; i < 24; i++) {
+            const hour = i.toString().padStart(2, '0') + ":00";
+            result[hour] = 0;
+        }
+
+        hourlyCounts.forEach(item => {
+            const hour = item._id.toString().padStart(2, '0') + ":00";
+            result[hour] = item.count;
+        });
+
+        return res.json({message: "success", data: result})
+    }
+    else if (charttype == "weekly"){
+        const startOfWeek = new Date();
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        // Aggregate user counts by day of the week
+        const weeklyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^payoutcommissionbalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfWeek,
+                        $lt: endOfWeek
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dayOfWeek: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const daysOfWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+        const result = {};
+
+        daysOfWeek.forEach(day => {
+            result[day] = 0;
+        });
+
+        weeklyCounts.forEach(item => {
+            const dayOfWeek = daysOfWeek[item._id - 1]; // MongoDB returns 1 for Sunday, 2 for Monday, etc.
+            result[dayOfWeek] = item.count;
+        });
+
+        return res.json({message: "success", data: result});
+    }
+    else if (charttype == "monthly"){
+        const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+        const endOfYear = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59, 999);
+
+        // Aggregate user counts by month
+        const monthlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^payoutcommissionbalance$/, $options: "i" },
+                    createdAt: {
+                        $gte: startOfYear,
+                        $lt: endOfYear
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const months = [
+            "january", "february", "march", "april", "may", "june",
+            "july", "august", "september", "october", "november", "december"
+        ];
+        const result = {};
+
+        months.forEach(month => {
+            result[month] = 0;
+        });
+
+        monthlyCounts.forEach(item => {
+            const monthName = months[item._id - 1]; // MongoDB returns 1 for January, 2 for February, etc.
+            result[monthName] = item.count;
+        });
+
+        return res.json({message: "success", data: result});
+    }
+    else if (charttype == "yearly"){
+        const releaseYear = 2024;
+        const currentYear = new Date().getFullYear();
+
+        // Aggregate user counts by year
+        const yearlyCounts = await Analytics.aggregate([
+            {
+                $match: {
+                    type: { $regex: /^payoutcommissionbalance$/, $options: "i" },
+                }
+            },
+            {
+                $group: {
+                    _id: { $year: "$createdAt" },
+                    count: { $sum: "$amount" }
+                }
+            },
+            {
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        // Format the result as desired
+        const result = {};
+
+        for (let year = releaseYear; year <= currentYear; year++) {
+            result[year] = 0;
+        }
+
+        yearlyCounts.forEach(item => {
+            const year = item._id;
+            if (year >= releaseYear && year <= currentYear) {
+                result[year] = item.count;
+            }
+        });
+        
+        return res.json({message: "success", data: result});
+    }
+}
+
+exports.getreferrallinkstatus = async (req, res) => {
+    const {id, username} = req.user
+
+    const referrallink = await Analytics.find({
+        owner: new mongoose.Types.ObjectId(id), 
+        type: { $regex: /^Buy/, $options: "i" } 
+    })
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the referral link status for ${username}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a probelm getting the referral link status. Please contact customer support for more details"})
+    })
+
+    if (referrallink.length <= 0){
+        return res.json({message: "success", data: {
+            status: false
+        }})
+    }
+
+    return res.json({message: "success", data: {
+        status: true
+    }})
 }
