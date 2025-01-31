@@ -220,55 +220,43 @@ exports.multiplebanstaffusers = async (req, res) => {
 // exports.multipledeletestaffusers = async (req, res) 
 
 exports.getadminlist = async (req, res) => {
-    const {id, username} = req.user
-    const {page, limit} = req.query
+    const { id, username } = req.user;
+    const { page, limit, search } = req.query;
 
     const pageOptions = {
         page: parseInt(page) || 0,
         limit: parseInt(limit) || 10
     };
 
-    const adminlist = await Staffusers.find({auth: {$ne: "superadmin"}})
-    .skip(pageOptions.page * pageOptions.limit)
-    .limit(pageOptions.limit)
-    .sort({createdAt: -1})
-    .catch(err => {
-        console.log(`Failed to get admin list data for ${username}, error: ${err}`)
+    const searchOptions = search ? { username: { $regex: search, $options: "i" } } : {};
 
-        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
+    try {
+        const [adminlist, totalDocuments] = await Promise.all([
+            Staffusers.find({ auth: { $ne: "superadmin" }, ...searchOptions })
+                .skip(pageOptions.page * pageOptions.limit)
+                .limit(pageOptions.limit)
+                .sort({ createdAt: -1 }),
+            Staffusers.countDocuments({ auth: { $ne: "superadmin" }, ...searchOptions })
+        ]);
 
-    const totalPages = await Staffusers.countDocuments({auth: {$ne: "superadmin"}})
-    .then(data => data)
-    .catch(err => {
+        const pages = Math.ceil(totalDocuments / pageOptions.limit);
 
-        console.log(`Failed to count documents staff users data for ${username}, error: ${err}`)
-
-        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
-
-    const pages = Math.ceil(totalPages / pageOptions.limit)
-
-    const data = {
-        users: [],
-        totalPages: pages
-    }
-
-    adminlist.forEach(value => {
-        const {_id, username, status, createdAt} = value
-
-        data["users"].push(
-            {
+        const data = {
+            users: adminlist.map(({ _id, username, status, createdAt }) => ({
                 userid: _id,
                 username: username,
                 status: status,
                 createdAt: createdAt
-            }
-        )
-    });
+            })),
+            totalPages: pages
+        };
 
-    return res.json({message: "success", data: data})
-}
+        return res.json({ message: "success", data: data });
+    } catch (err) {
+        console.log(`Failed to get admin list data for ${username}, error: ${err}`);
+        return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` });
+    }
+};
 
 exports.updateadmin = async (req, res) => {
     const {id, username} = req.user
