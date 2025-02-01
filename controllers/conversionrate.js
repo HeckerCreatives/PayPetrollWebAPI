@@ -1,4 +1,4 @@
-const Conversionrate = require("../models/conversionrate")
+const Conversionrate = require("../models/Conversionrate")
 
 exports.getcurrentconversionrate = async (req, res) => {
     const rate = await Conversionrate.find()
