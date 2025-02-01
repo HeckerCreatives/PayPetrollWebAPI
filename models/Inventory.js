@@ -51,8 +51,10 @@ const inventoryShema = new mongoose.Schema(
         },
         startdate: {
             type: String,
-            
-        }
+        },
+        duration: {
+            type: Number
+        },
     },
     {
         timestamps: true
