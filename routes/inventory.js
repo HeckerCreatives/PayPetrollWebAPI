@@ -1,4 +1,4 @@
-const { getunclaimedincomeinventory, buytrainer, getinventory, getinventoryhistory, claimtotalincome, gettotalpurchased, getplayerinventoryforadmin } = require("../controllers/inventory")
+const { getunclaimedincomeinventory, buytrainer, getinventory, getinventoryhistory, claimtotalincome, gettotalpurchased, getplayerinventoryforadmin, getinventoryhistoryuseradmin } = require("../controllers/inventory")
 const { protectplayer, protectsuperadmin } = require("../middleware/middleware")
 
 const router = require("express").Router()
@@ -12,7 +12,7 @@ router
 .post("/buytrainer", protectplayer, buytrainer)
 .post("/claimtotalincome", protectplayer, claimtotalincome)
 
-
+.get("/getinventoryhistoryuseradmin", protectsuperadmin, getinventoryhistoryuseradmin)
 .get("/getplayerinventoryforadmin", protectsuperadmin, getplayerinventoryforadmin)
 
 

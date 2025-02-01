@@ -7,6 +7,7 @@ router
 .get("/getsociallinksa", getsociallinks)
 .get("/getspecificsociallink", getspecificsociallink)
 .get("/getsociallinks", protectsuperadmin, getsociallinks)
+.get("/getsociallinkslp", getsociallinks)
 .get("/deletesociallink",protectsuperadmin, deletesociallink)
 .post("/createsociallink", protectsuperadmin, createsociallink)
 .post("/editsociallink", protectsuperadmin, editsociallink)

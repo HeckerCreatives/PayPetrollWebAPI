@@ -11,7 +11,8 @@ exports.createsociallink = async (req, res) => {
 
     const isExisting = await Sociallinks.findOne({ title: { $regex: title, $options: "i" } });
 
-    if(!isExisting){
+    console.log(isExisting)
+    if(isExisting){
         return res.status(400).json({ message: "failed", data: `Social link with title ${title} already exists.`})
     }
     await Sociallinks.create({
