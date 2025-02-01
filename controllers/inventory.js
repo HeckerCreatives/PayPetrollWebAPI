@@ -7,6 +7,7 @@ const { addanalytics } = require("../utils/analyticstools")
 const { DateTimeServerExpiration, DateTimeServer, RemainingTime, AddUnixtimeDay } = require("../utils/datetimetools")
 const Inventoryhistory = require("../models/Inventoryhistory")
 const { addwallethistory } = require("../utils/wallethistorytools")
+const Maintenance = require("../models/Maintenance")
 
 exports.buytrainer = async (req, res) => {
     const {id, username} = req.user
@@ -51,35 +52,105 @@ exports.buytrainer = async (req, res) => {
 
     const totalincome = (trainer.profit * amount) + amount
     
-
-    await Inventory.create({
-        owner: new mongoose.Types.ObjectId(id), 
-        type: type,
-        startdate: DateTimeServer(), 
-        duration: trainer.duration, 
-        expiration: DateTimeServerExpiration(trainer.duration), 
-        rank: trainer.rank, 
-        totalaccumulated: 0, 
-        dailyaccumulated: 0,
-        totalincome: totalincome,
-        dailyclaim: 0,  
-        price: amount,
-        petname: trainer.name,
-        petclean: 0,
-        petlove: 0,
-        petfeed: 0,
-    })
+    const b1t1 = await Maintenance.findOne({ type: "b1t1", value: "1" })
+    .then(data => data)
     .catch(err => {
-    
-            console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
-    
-            return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+        console.log(`There's a problem getting b1t1 maintenance. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem with the server! Please contact customer support."})
+    })
+
+    if(b1t1 && b1t1.value === '1' && b1t1.type === 'b1t1'){
+
+        await Inventory.create({
+            owner: new mongoose.Types.ObjectId(id), 
+            type: type,
+            startdate: DateTimeServer(), 
+            duration: trainer.duration, 
+            expiration: DateTimeServerExpiration(trainer.duration), 
+            rank: trainer.rank, 
+            totalaccumulated: 0, 
+            dailyaccumulated: 0,
+            totalincome: totalincome,
+            dailyclaim: 0,  
+            price: amount,
+            petname: trainer.name,
+            petclean: 0,
+            petlove: 0,
+            petfeed: 0,
         })
+    .catch(err => {
+        
+        console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
+        
+        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
     
+    
+    const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount)
+    
+    await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount)
+
+        await Inventory.create({
+            owner: new mongoose.Types.ObjectId(id), 
+            type: type,
+            startdate: DateTimeServer(), 
+            duration: trainer.duration, 
+            expiration: DateTimeServerExpiration(trainer.duration), 
+            rank: trainer.rank, 
+            totalaccumulated: 0, 
+            dailyaccumulated: 0,
+            totalincome: totalincome,
+            dailyclaim: 0,  
+            price: amount,
+            petname: trainer.name,
+            petclean: 0,
+            petlove: 0,
+            petfeed: 0,
+        })
+    .catch(err => {
         
-        const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount)
+        console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
         
-        await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount)
+        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+
+    const inventoryhistory1 = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount)
+
+    await addanalytics(id, inventoryhistory1.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount)
+
+    } else {
+
+        await Inventory.create({
+            owner: new mongoose.Types.ObjectId(id), 
+            type: type,
+            startdate: DateTimeServer(), 
+            duration: trainer.duration, 
+            expiration: DateTimeServerExpiration(trainer.duration), 
+            rank: trainer.rank, 
+            totalaccumulated: 0, 
+            dailyaccumulated: 0,
+            totalincome: totalincome,
+            dailyclaim: 0,  
+            price: amount,
+            petname: trainer.name,
+            petclean: 0,
+            petlove: 0,
+            petfeed: 0,
+        })
+    .catch(err => {
+        
+        console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
+        
+        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+    
+    
+    const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount)
+    
+    await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount)
+    }
 
     return res.json({message: "success"})
 }

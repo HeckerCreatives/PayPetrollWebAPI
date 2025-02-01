@@ -4,6 +4,7 @@ const { protectsuperadmin, protectplayer } = require("../middleware/middleware")
 
 router
     .get("/geteventmainte", protectplayer, geteventmainte)
+    .get("/geteventmainteadmin", protectsuperadmin, geteventmainte)
     .get("/getmaintenance", protectsuperadmin, getmaintenance)
     .post("/changemaintenance", protectsuperadmin, changemaintenance)
 

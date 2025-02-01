@@ -7,6 +7,7 @@ const Userwallets = require("../models/Userwallets")
 const StaffUserwallets = require("../models/Staffuserwallets")
 const Maintenance = require("../models/Maintenance")
 const Leaderboard = require("../models/Leaderboard")
+const Sociallinks = require("../models/Sociallinks")
 
 
 exports.initialize = async () => {
@@ -114,7 +115,7 @@ exports.initialize = async () => {
     })
 
     if (maintenancelist.length <= 0){
-        const maintenancelistdata = ["fightgame", "eventgame", "fullgame", "payout", "moleventgame", "molegame", "fullmolegame", "buyonetakeone"]
+        const maintenancelistdata = ["fightgame", "eventgame", "fullgame", "payout", "b1t1"]
 
         maintenancelistdata.forEach(async maintenancedata => {
             await Maintenance.create({type: maintenancedata, value: "0"})
@@ -422,6 +423,29 @@ exports.initialize = async () => {
     //     }
 
     //     console.log("Game ID initialization complete.");
+
+    const sociallinks = await Sociallinks.find()
+    .then(data => data)
+    .catch(err => {
+        console.log(`Error finding Social Links data: ${err}`)
+    })
+
+
+    if(sociallinks.length <= 0){
+        const socialinksdata = ["facebook", "discord", "telegram", "tiktok"]
+
+        const socialinksbulkwrite = socialinksdata.map(titles => ({
+            insertOne: {
+                document: { title: titles, link: ""}
+            }
+        }))
+
+        await Sociallinks.bulkWrite(socialinksbulkwrite)
+        .catch(err => {
+            console.log(`Error creating social links data: ${err}`)
+            return
+        }) 
+    }
 
 
     console.log("SERVER DATA INITIALIZED")
