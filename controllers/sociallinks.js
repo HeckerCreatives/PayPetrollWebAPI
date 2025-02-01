@@ -9,7 +9,11 @@ exports.createsociallink = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "Please input title and link."})
     }
 
+    const isExisting = await Sociallinks.findOne({ title: { $regex: title, $options: "i" } });
 
+    if(!isExisting){
+        return res.status(400).json({ message: "failed", data: `Social link with title ${title} already exists.`})
+    }
     await Sociallinks.create({
         title,
         link
@@ -57,7 +61,7 @@ exports.deletesociallink = async (req, res) => {
     if(!id){
         return res.status(400).json({ message: "failed", data: "Please select social link to delete."})
     }
-    await Sociallinks.findOneAndUpdate({ _id: new mongoose.Types.ObjectId(id) })
+    await Sociallinks.findOneAndDelete({ _id: new mongoose.Types.ObjectId(id) })
     .then(data => {
         if(!data){
             return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact support for more details."})
