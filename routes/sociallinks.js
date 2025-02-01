@@ -1,10 +1,10 @@
 const { getsociallinks, getspecificsociallink, createsociallink, editsociallink, deletesociallink } = require("../controllers/sociallinks")
-const { protectsuperadmin } = require("../middleware/middleware")
+const { protectsuperadmin, protectplayer } = require("../middleware/middleware")
 
 const router = require("express").Router()
 
 router
-.get("/getsociallinksa", getsociallinks)
+.get("/getsociallinksa", protectplayer, getsociallinks)
 .get("/getspecificsociallink", getspecificsociallink)
 .get("/getsociallinks", protectsuperadmin, getsociallinks)
 .get("/getsociallinkslp", getsociallinks)

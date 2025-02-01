@@ -15,6 +15,7 @@ exports.getuserdetails = async (req, res) => {
     const {id, username} = req.user
 
     const details = await Userdetails.findOne({owner: new mongoose.Types.ObjectId(id)})
+    .populate("owner", "gameid")
     .then(data => data)
     .catch(err => {
 
@@ -27,6 +28,7 @@ exports.getuserdetails = async (req, res) => {
         return res.status(400).json({ message: "bad-request", data: "There's a problem with your account! Please contact customer support." })
     }
 
+
     const data = {
         username: username,
         phonenumber: details.phonenumber,
@@ -38,7 +40,8 @@ exports.getuserdetails = async (req, res) => {
         postalcode: details.postalcode,
         paymentmethod: details.paymentmethod,
         accountnumber: details.accountnumber,
-        profilepicture: details.profilepicture
+        profilepicture: details.profilepicture,
+        gameid: details.owner.gameid
     }
 
     return res.json({message: "success", data: data})

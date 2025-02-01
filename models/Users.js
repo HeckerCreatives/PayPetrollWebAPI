@@ -1,11 +1,12 @@
 const mongoose = require("mongoose");
 const bcrypt = require('bcrypt');
 
+
 const UsersSchema = new mongoose.Schema(
     {
         username: {
             type: String,
-            index: true // Automatically creates an index on 'amount'
+            index: true // Automatically creates an index on 'username'
         },
         password: {
             type: String
@@ -13,7 +14,7 @@ const UsersSchema = new mongoose.Schema(
         referral: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Users",
-            index: true // Automatically creates an index on 'amount'
+            index: true // Automatically creates an index on 'referral'
         },
         gametoken: {
             type: String
@@ -21,9 +22,6 @@ const UsersSchema = new mongoose.Schema(
         webtoken: {
             type: String
         },
-        // moletoken: {
-        //     type: String
-        // },
         bandate: {
             type: String
         },
@@ -33,14 +31,17 @@ const UsersSchema = new mongoose.Schema(
         status: {
             type: String,
             default: "active",
-            index: true // Automatically creates an index on 'amount'
+            index: true // Automatically creates an index on 'status'
+        },
+        gameid: {
+            type: String,
+            unique: true // Ensure the game ID is unique
         }
     },
     {
         timestamps: true
     }
-)
-
+);
 UsersSchema.pre("save", async function (next) {
 
     if (this.isNew) {
