@@ -4,7 +4,7 @@ const Userwallets = require("../models/Userwallets")
 const { addwallethistory } = require("../utils/wallethistorytools")
 const { addanalytics } = require("../utils/analyticstools")
 const { checkmaintenance } = require("../utils/maintenancetools")
-const Conversionrate = require("../models/conversionrate")
+const Conversionrate = require("../models/Conversionrate")
 const StaffUserwallets = require("../models/Staffuserwallets")
 
 exports.requestpayout = async (req, res) => {
