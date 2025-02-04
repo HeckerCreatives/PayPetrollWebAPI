@@ -488,6 +488,10 @@ exports.processpayout = async (req, res) => {
     let playerid = ""
     let wallettype = ""
 
+    if(status != "done" && status != "reject"){
+        return res.status(400).json({message: "failed", data: "Invalid status value!"})
+    }
+    
     const payoutdata = await Payout.findOne({_id: new mongoose.Types.ObjectId(payoutid)})
     .then(data => data)
     .catch(err => {

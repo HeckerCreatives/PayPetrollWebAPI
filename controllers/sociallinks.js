@@ -38,10 +38,13 @@ exports.editsociallink = async (req, res) => {
 
 
     
-    const isExisting = await Sociallinks.findOne({ title: { $regex: title, $options: "i" } });
-
-    if(isExisting){
-        return res.status(400).json({ message: "failed", data: `Social link with title ${title} already exists.`})
+    const isExisting = await Sociallinks.findOne({ 
+        title: { $regex: title, $options: "i" },
+        _id: { $ne: new mongoose.Types.ObjectId(id) }
+    });
+    
+    if (isExisting) {
+        return res.status(400).json({ message: "failed", data: `Social link with title ${title} already exists.` });
     }
 
 
