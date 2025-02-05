@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Analytics = require("../models/Analytics");
 const Payin = require("../models/Payin");
 
