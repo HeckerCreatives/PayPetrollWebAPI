@@ -7,7 +7,7 @@ exports.getpayingraph = async (req, res) => {
 
     if (charttype === "daily") {
         const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
+        startOfDay.setHours(6, 0, 0, 0); // Start from 6 AM
 
         const endOfDay = new Date();
         endOfDay.setHours(23, 59, 59, 999);
@@ -34,7 +34,7 @@ exports.getpayingraph = async (req, res) => {
         ]);
 
         const result = {};
-        for (let i = 0; i < 24; i++) {
+        for (let i = 3; i < 24; i++) { // Loop from 6 AM to 11 PM
             const hour = i.toString().padStart(2, '0') + ":00";
             result[hour] = 0;
         }
