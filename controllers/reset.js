@@ -1,6 +1,3 @@
-
-
-
 const mongoose = require('mongoose');
 const Leaderboard = require('../models/Leaderboard');
 const LeaderboardHistory = require('../models/Leaderboardhistory');
@@ -12,10 +9,13 @@ exports.resetleaderboard = async (req, res) => {
 
         if (currentLeaderboard.length > 0) {
             // Insert the fetched data into the leaderboard history with the current date
-            const historyData = currentLeaderboard.map(entry => ({
-                ...entry.toObject(),
-                date: new Date()
-            }));
+            const historyData = currentLeaderboard.map(entry => {
+                const { _id, ...rest } = entry.toObject(); // Remove the _id field
+                return {
+                    ...rest,
+                    date: new Date()
+                };
+            });
             await LeaderboardHistory.insertMany(historyData);
         }
 
