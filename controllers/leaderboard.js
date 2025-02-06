@@ -72,14 +72,20 @@ exports.getLeaderboardsa = async (req, res) => {
 
 
 exports.getLeaderboardHistory = async (req, res) => {
-    const { page, limit, date } = req.query;
+    const { page, limit, date, hour } = req.query;
 
     const pageOptions = {
         page: parseInt(page, 10) || 0,
         limit: parseInt(limit, 10) || 10
     };
 
-    const query = date ? { date: { $regex: new RegExp(`^${date}`) } } : {}; // Allow date search in YYYY-MM-DD format
+    let query = {};
+    if (date) {
+        query.date = { $regex: new RegExp(`^${date}`) }; // Allow date search in YYYY-MM-DD format
+    }
+    if (hour) {
+        query.date = { $regex: new RegExp(`^${date} ${hour}`) }; // Allow date and hour search in YYYY-MM-DD HH format
+    }
 
     try {
         const totalDocuments = await LeaderboardHistory.countDocuments(query);
@@ -129,7 +135,7 @@ exports.getLeaderboardDates = async (req, res) => {
         const dates = await LeaderboardHistory.aggregate([
             {
                 $group: {
-                    _id: { $substr: ["$date", 0, 10] } // Group by the first 10 characters of the date string (YYYY-MM-DD)
+                    _id: { $substr: ["$date", 0, 13] } // Group by the first 13 characters of the date string (YYYY-MM-DD HH)
                 }
             },
             { $sort: { "_id": 1 } } // Sort by date in ascending order
