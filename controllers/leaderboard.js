@@ -123,3 +123,27 @@ exports.getLeaderboardHistory = async (req, res) => {
         return res.status(400).json({ message: "bad-request", data: "There's a problem getting the leaderboard history. Please contact customer support." });
     }
 };
+
+exports.getLeaderboardDates = async (req, res) => {
+    try {
+        const dates = await LeaderboardHistory.aggregate([
+            {
+                $group: {
+                    _id: { $substr: ["$date", 0, 10] } // Group by the first 10 characters of the date string (YYYY-MM-DD)
+                }
+            },
+            { $sort: { "_id": 1 } } // Sort by date in ascending order
+        ]);
+
+        if (dates.length === 0) {
+            return res.status(404).json({ message: "failed", data: "No dates found in leaderboard history" });
+        }
+
+        const formattedDates = dates.map(date => date._id);
+
+        return res.json({ message: "success", data: formattedDates });
+    } catch (err) {
+        console.log(`There's a problem getting the leaderboard dates. Error ${err}`);
+        return res.status(400).json({ message: "bad-request", data: "There's a problem getting the leaderboard dates. Please contact customer support." });
+    }
+};

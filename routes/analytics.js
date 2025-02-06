@@ -1,4 +1,4 @@
-const { getpayingraph, gettotalpayinperday, getunilevelpayoutgraph, getearningpayoutgraph, getproductgraph, getcommissiongraph, getreferrallinkstatus } = require('../controllers/analytics');
+const { getpayingraph, gettotalpayinperday, getunilevelpayoutgraph, getearningpayoutgraph, getproductgraph, getcommissiongraph, getreferrallinkstatus, getcommissionlist } = require('../controllers/analytics');
 const { protectsuperadmin, protectplayer } = require('../middleware/middleware');
 
 const router = require('express').Router();
@@ -11,5 +11,6 @@ router
 .get("/getearningpayoutgraph", protectsuperadmin, getearningpayoutgraph)
 .get("/getunilevelpayoutgraph", protectsuperadmin, getunilevelpayoutgraph)
 .get("/gettotalpayinperday", protectsuperadmin, gettotalpayinperday)
+.get("/getcommisionlist", protectsuperadmin, getcommissionlist)
 
 module.exports = router;
