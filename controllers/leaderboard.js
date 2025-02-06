@@ -71,55 +71,55 @@ exports.getLeaderboardsa = async (req, res) => {
 };
 
 
-
 exports.getLeaderboardHistory = async (req, res) => {
-
     const { page, limit, date } = req.query;
 
     const pageOptions = {
         page: parseInt(page, 10) || 0,
         limit: parseInt(limit, 10) || 10
-    }
+    };
 
-    const query = date ? { date: { $regex: new RegExp(`^${date}`) } } : {}; // Allow date search
+    const query = date ? { date: { $regex: new RegExp(`^${date}`) } } : {}; // Allow date search in YYYY-MM-DD format
 
-    await LeaderboardHistory.find(query)
-        .populate('owner', 'username')
-        .sort({ date: 1 }) // Sort by date in ascending order
-        .skip(pageOptions.page * pageOptions.limit)
-        .limit(pageOptions.limit)
-        .then(data => {
-            if (data.length === 0) {
-                return res.status(404).json({ message: "failed", data: "No leaderboard history found" });
+    try {
+        const totalDocuments = await LeaderboardHistory.countDocuments(query);
+        const data = await LeaderboardHistory.find(query)
+            .populate('owner', 'username')
+            .sort({ date: 1 }) // Sort by date in ascending order
+            .skip(pageOptions.page * pageOptions.limit)
+            .limit(pageOptions.limit);
+
+        if (data.length === 0) {
+            return res.status(404).json({ message: "failed", data: "No leaderboard history found" });
+        }
+
+        const finaldata = [];
+        let previousDate = null;
+        let rank = pageOptions.page * pageOptions.limit + 1; // Initialize rank based on the page
+
+        data.forEach((item, index) => {
+            const currentDate = item.date.split(' ')[0]; // Extract the date part from the string
+
+            if (previousDate && previousDate !== currentDate) {
+                rank = pageOptions.page * pageOptions.limit + 1; // Reset rank if the date has changed
             }
 
-            const finaldata = []
-
-            let previousDate = null;
-            let rank = 1;
-            
-            data.forEach((item, index) => {
-                const currentDate = item.date.split(' ')[0]; // Extract the date part from the string
-            
-                if (previousDate && previousDate !== currentDate) {
-                    rank = 1; // Reset rank if the date has changed
-                }
-            
-                finaldata.push({
-                    username: item.owner.username,
-                    amount: item.amount,
-                    date: item.date,
-                    rank: rank
-                });
-            
-                previousDate = currentDate;
-                rank++;
+            finaldata.push({
+                username: item.owner.username,
+                amount: item.amount,
+                date: item.date,
+                rank: rank
             });
 
-            return res.json({ message: "success", data: finaldata });
-        })
-        .catch(err => {
-            console.log(`There's a problem getting the leaderboard history. Error ${err}`);
-            return res.status(400).json({ message: "bad-request", data: "There's a problem getting the leaderboard history. Please contact customer support." });
+            previousDate = currentDate;
+            rank++;
         });
-}
+
+        const totalPages = Math.ceil(totalDocuments / pageOptions.limit);
+
+        return res.json({ message: "success", data: finaldata, totalPages: totalPages });
+    } catch (err) {
+        console.log(`There's a problem getting the leaderboard history. Error ${err}`);
+        return res.status(400).json({ message: "bad-request", data: "There's a problem getting the leaderboard history. Please contact customer support." });
+    }
+};
