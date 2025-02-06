@@ -135,19 +135,29 @@ exports.getLeaderboardDates = async (req, res) => {
         const dates = await LeaderboardHistory.aggregate([
             {
                 $group: {
-                    _id: { $substr: ["$date", 0, 13] } // Group by the first 13 characters of the date string (YYYY-MM-DD HH)
+                    _id: { $substr: ["$date", 0, 10] } // Group by the first 10 characters of the date string (YYYY-MM-DD)
                 }
             },
             { $sort: { "_id": 1 } } // Sort by date in ascending order
         ]);
 
-        if (dates.length === 0) {
-            return res.status(404).json({ message: "failed", data: "No dates found in leaderboard history" });
+        const hours = await LeaderboardHistory.aggregate([
+            {
+                $group: {
+                    _id: { $substr: ["$date", 11, 2] } // Group by the hour part of the date string (HH)
+                }
+            },
+            { $sort: { "_id": 1 } } // Sort by hour in ascending order
+        ]);
+
+        if (dates.length === 0 || hours.length === 0) {
+            return res.status(404).json({ message: "failed", data: "No dates or hours found in leaderboard history" });
         }
 
         const formattedDates = dates.map(date => date._id);
+        const formattedHours = hours.map(hour => hour._id);
 
-        return res.json({ message: "success", data: formattedDates });
+        return res.json({ message: "success", data: { dates: formattedDates, hours: formattedHours } });
     } catch (err) {
         console.log(`There's a problem getting the leaderboard dates. Error ${err}`);
         return res.status(400).json({ message: "bad-request", data: "There's a problem getting the leaderboard dates. Please contact customer support." });
