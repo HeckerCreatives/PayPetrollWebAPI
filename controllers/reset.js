@@ -1,11 +1,13 @@
 const mongoose = require('mongoose');
 const Leaderboard = require('../models/Leaderboard');
 const LeaderboardHistory = require('../models/Leaderboardhistory');
+const moment = require('moment-timezone');
 
 exports.resetleaderboard = async (req, res) => {
     try {
         // Fetch the current leaderboard data
         const currentLeaderboard = await Leaderboard.find({});
+        const philippinesTime = moment.tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
 
         if (currentLeaderboard.length > 0) {
             // Insert the fetched data into the leaderboard history with the current date
@@ -13,7 +15,7 @@ exports.resetleaderboard = async (req, res) => {
                 const { _id, ...rest } = entry.toObject(); // Remove the _id field
                 return {
                     ...rest,
-                    date: new Date()
+                    date: philippinesTime
                 };
             });
             await LeaderboardHistory.insertMany(historyData);
