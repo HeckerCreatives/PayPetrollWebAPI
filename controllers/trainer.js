@@ -17,7 +17,8 @@ exports.getTrainers = async(req, res)=> {
                         min: "$min",
                         max: "$max",
                         duration: "$duration",
-                        profit: "$profit"
+                        profit: "$profit",
+                        b1t1: "$b1t1"
                     }
                 }
             }
@@ -36,7 +37,7 @@ exports.getTrainers = async(req, res)=> {
 
 exports.edittrainer = async (req, res) => {
 
-    const { trainerid, profit, duration, min, max } = req.body
+    const { trainerid, profit, duration, min, max, b1t1 } = req.body
 
     if(!trainerid || !profit || !duration){
         return res.status(400).json({ message: "failed", data: "Incomplete form data."})
@@ -49,7 +50,9 @@ exports.edittrainer = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "Values cannot be negative." });
     }
 
-    
+    if (b1t1 && !/^[01]+$/.test(b1t1)) {
+        return res.status(400).json({ message: "failed", data: "b1t1 should only contain '1' and '0'." });
+    }
 
     await Trainer.findOneAndUpdate(
         {
@@ -57,10 +60,11 @@ exports.edittrainer = async (req, res) => {
         },
         {
             $set: {
-                profit: parseFloat(profit) , 
+                profit: parseFloat(profit),
                 duration: parseFloat(duration),
                 min: parseFloat(min),
-                max: parseFloat(max)
+                max: parseFloat(max),
+                ...(b1t1 && { b1t1 }) // Only update b1t1 if it is provided
             }
         }
     )

@@ -25,6 +25,9 @@ const TrainerSchema = new mongoose.Schema(
         },
         rank: {
             type: String
+        },
+        b1t1: {
+            type: String
         }
     },
     {

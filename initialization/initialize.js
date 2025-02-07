@@ -447,6 +447,15 @@ exports.initialize = async () => {
         }) 
     }
 
+    const hasb1t1 = await Trainer.find({b1t1: { $exists: true }})
+
+    if(hasb1t1.length <= 0){
+
+        await Trainer.updateMany({}, { $set: { b1t1: "0" } })
+
+        console.log("b1t1 initialized")
+    }
+
 
     console.log("SERVER DATA INITIALIZED")
 }
