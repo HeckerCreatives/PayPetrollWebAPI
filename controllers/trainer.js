@@ -90,7 +90,10 @@ exports.getusertrainer = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "Incomplete form data." });
     }
 
-    if(type === 'Expert'){
+    if(type === 'Novice'){
+        return res.status(200).json({ message: "success" })
+    }
+    else if(type === 'Expert'){
         const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
 
         if(!test1){
