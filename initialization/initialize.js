@@ -175,12 +175,12 @@ exports.initialize = async () => {
             rank: "Novice"
             },
             {
-            name: "Hamster",
+            name: "Chip",
             min: 500,
             max: 5000,
             profit: 0.15,
             duration: 5,
-            animal: "Chip",
+            animal: "Hamster",
             rank: "Novice"
             },
             // Expert
