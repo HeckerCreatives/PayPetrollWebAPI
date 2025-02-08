@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose")
 const Trainer = require("../models/Trainer")
 const Inventoryhistory = require("../models/Inventoryhistory")
+const Inventory = require("../models/Inventory")
 
 
 exports.getTrainers = async(req, res)=> {
@@ -91,7 +92,17 @@ exports.getusertrainer = async (req, res) => {
     }
 
     if(type === 'Novice'){
-        return res.status(200).json({ message: "success" })
+        const finalamount = await Inventory.aggregate([
+            { $match: { owner: new mongoose.Types.ObjectId(id), rank: "Novice" } },
+            { $group: { _id: null, totalAmount: { $sum: "$price" } } }
+        ]);
+
+        const totalAmount = finalamount.length > 0 ? finalamount[0].totalAmount : 0;
+
+        const amountleft = 5000 - totalAmount;
+
+        return res.status(200).json({ message: "success", data: { amountleft: amountleft}})
+       
     }
     else if(type === 'Expert'){
         const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
