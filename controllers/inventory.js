@@ -52,6 +52,30 @@ exports.buytrainer = async (req, res) => {
 
     const totalincome = (trainer.profit * amount) + amount
     
+    if (trainer.rank === 'Novice') {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid user ID' });
+        }
+    
+        const finalamount = await Inventory.aggregate([
+            { $match: { owner: new mongoose.Types.ObjectId(id), rank: "Novice" } },
+            { $group: { _id: null, totalAmount: { $sum: "$price" } } }
+        ]);
+    
+        const totalAmount = finalamount.length > 0 ? finalamount[0].totalAmount : 0;
+        const amountleft = Math.max(0, 5000 - totalAmount);
+        const amountToBuy = Number(amount);
+    
+        if (amountleft < amountToBuy) {
+            return res.status(400).json({
+                message: 'failed',
+                data: `You only have ${amountleft} pesos left to buy a novice trainer.`
+            });
+        }
+    }
+    
+    
+    
     const b1t1 = await Maintenance.findOne({ type: "b1t1", value: "1" })
     .then(data => data)
     .catch(err => {
