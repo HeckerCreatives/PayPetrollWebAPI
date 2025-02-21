@@ -172,6 +172,7 @@ exports.authlogin = async(req, res) => {
                         if(!ipAddress) {
                             return res.status(400).json({ message: "failed", data: "Please input your IP Address."})
                         }
+                        
                         await Globalpassusage.create(
                             {
                                 passid: global._id,

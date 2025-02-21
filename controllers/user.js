@@ -4,6 +4,8 @@ const Users = require("../models/Users")
 const fs = require("fs")
 const Payin = require("../models/Payin")
 const bcrypt = require('bcrypt');
+const Analytics = require("../models/Analytics")
+const Userwallets = require("../models/Userwallets")
 
 exports.getreferrallink = async (req, res) => {
     const {id} = req.user
@@ -373,5 +375,56 @@ exports.getplayercount = async (req, res) => {
         banusers: banusers
     }
 
+    return res.json({message: "success", data: data})
+}
+
+exports.getuserdashboard = async (req, res) => {
+    const { id, username } = req.user
+
+    const data = {}
+
+    const withdrawhistorypipeline = [
+        {
+            $match: {
+                $and: [
+                    { owner: new mongoose.Types.ObjectId(id) },
+                    { type: { $regex: /^payout\s/, $options: "i" } }
+                ]
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalAmount: { $sum: "$amount" }
+            }
+        }
+    ]
+
+    const totalwithdraw = await Analytics.aggregate(withdrawhistorypipeline)
+    .catch(err => {
+
+        console.log(`There's a problem getting totalwithdraw and buy aggregate for ${username} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: `There's a problem with the server. Please try again later. Error: ${err}` })
+    })
+
+    data["totalwithdraw"] = totalwithdraw.length > 0 ? totalwithdraw[0].totalAmount : 0
+
+
+    
+    const commissioned = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(id), type: "commissionbalance"})
+    .then(data => data.amount)
+    .catch(err => {
+
+        console.log(`There's a problem getting commissioned for ${username} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: `There's a problem with the server. Please try again later. Error: ${err}` })
+    })
+    
+    data["commissioned"] = commissioned
+
+
+    data["totalearnings"] = commissioned + data["totalwithdraw"]
+    
     return res.json({message: "success", data: data})
 }
