@@ -72,6 +72,8 @@ exports.buytrainer = async (req, res) => {
                 data: `You only have ${amountleft} pesos left to buy a novice trainer.`
             });
         }
+
+        console.log(amountleft, amountToBuy)
     }
     
     
