@@ -93,7 +93,7 @@ exports.buytrainer = async (req, res) => {
             type: type,
             startdate: DateTimeServer(), 
             duration: trainer.duration, 
-            proft: trainer.profit,
+            profit: trainer.profit,
             expiration: DateTimeServerExpiration(trainer.duration), 
             rank: trainer.rank, 
             totalaccumulated: 0, 
@@ -125,7 +125,7 @@ exports.buytrainer = async (req, res) => {
             duration: trainer.duration, 
             expiration: DateTimeServerExpiration(trainer.duration), 
             rank: trainer.rank, 
-            proft: trainer.profit,
+            profit: trainer.profit,
             totalaccumulated: 0, 
             dailyaccumulated: 0,
             totalincome: totalincome,
@@ -157,7 +157,7 @@ exports.buytrainer = async (req, res) => {
             duration: trainer.duration, 
             expiration: DateTimeServerExpiration(trainer.duration), 
             rank: trainer.rank, 
-            proft: trainer.profit,
+            profit: trainer.profit,
             totalaccumulated: 0, 
             dailyaccumulated: 0,
             totalincome: totalincome,
@@ -295,7 +295,7 @@ exports.getinventory = async (req, res) => {
         const pages = Math.ceil(totalDocuments / pageOptions.limit);
 
         const data = await Promise.all(trainer.map(async (trainers) => {
-            const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate, profit } = trainers; 
+            const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate, profit, totalincome } = trainers; 
 
             const creaturelimit = (parseInt(price) * profit) + parseInt(price);
             const limitperday = creaturelimit / duration;
@@ -309,6 +309,7 @@ exports.getinventory = async (req, res) => {
                 rank: rank,
                 qty: qty,
                 duration: duration,
+                totalincome: totalincome,
                 totalaccumulated: totalaccumulated,
                 dailyaccumulated: dailyaccumulated,
                 limittotal: creaturelimit,
