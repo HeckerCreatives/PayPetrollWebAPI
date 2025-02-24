@@ -536,6 +536,9 @@ exports.processpayout = async (req, res) => {
     }
     else{
 
+        if (wallettype == "commissionbalance"){
+            return res.json({message: "success"})
+        } else if(wallettype == "gamebalance"){
         const adminfee = payoutvalue * 0.1
 
         await StaffUserwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id)}, {$inc: {amount: adminfee}})
@@ -544,6 +547,7 @@ exports.processpayout = async (req, res) => {
 
         if (analyticsadd != "success"){
             return res.status(401).json({ message: 'failed', data: `There's a problem saving payin in analytics history. Please contact customer support for more details` })
+        }
         }
     }
 

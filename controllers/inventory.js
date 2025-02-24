@@ -93,6 +93,7 @@ exports.buytrainer = async (req, res) => {
             type: type,
             startdate: DateTimeServer(), 
             duration: trainer.duration, 
+            proft: trainer.profit,
             expiration: DateTimeServerExpiration(trainer.duration), 
             rank: trainer.rank, 
             totalaccumulated: 0, 
@@ -124,6 +125,7 @@ exports.buytrainer = async (req, res) => {
             duration: trainer.duration, 
             expiration: DateTimeServerExpiration(trainer.duration), 
             rank: trainer.rank, 
+            proft: trainer.profit,
             totalaccumulated: 0, 
             dailyaccumulated: 0,
             totalincome: totalincome,
@@ -155,6 +157,7 @@ exports.buytrainer = async (req, res) => {
             duration: trainer.duration, 
             expiration: DateTimeServerExpiration(trainer.duration), 
             rank: trainer.rank, 
+            proft: trainer.profit,
             totalaccumulated: 0, 
             dailyaccumulated: 0,
             totalincome: totalincome,
@@ -292,17 +295,10 @@ exports.getinventory = async (req, res) => {
         const pages = Math.ceil(totalDocuments / pageOptions.limit);
 
         const data = await Promise.all(trainer.map(async (trainers) => {
-            const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate } = trainers;
+            const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate, profit } = trainers; 
 
-            const trainerz = await Trainer.findOne({ name: type });
-
-            if (!trainerz) {
-                console.log(`Trainer type ${type} not found for ${username}`);
-                return null; // Skip if no trainer details found
-            }
-
-            const creaturelimit = (parseInt(price) * trainerz.profit) + parseInt(price);
-            const limitperday = creaturelimit / trainerz.duration;
+            const creaturelimit = (parseInt(price) * profit) + parseInt(price);
+            const limitperday = creaturelimit / duration;
 
             const earnings = getfarm(startdate, AddUnixtimeDay(startdate, duration), creaturelimit);
             const remainingtime = RemainingTime(parseFloat(startdate), duration);
