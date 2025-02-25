@@ -135,9 +135,9 @@ exports.getusertrainer = async (req, res) => {
     //     //     return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1), Expert (1), Ace (1) and Ace of Spade (1) Trainer first.` });
     //     // }
     // } 
-    else {
-        return res.status(400).json({ message: "failed", data: "Invalid type." });
-    }
+    // else {
+    //     return res.status(400).json({ message: "failed", data: "Invalid type." });
+    // }
 
 
     return res.status(200).json({ message: "success" })
