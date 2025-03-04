@@ -422,49 +422,57 @@ exports.deletepayinplayersuperadmin = async (req, res) => {
     .then(data => data)
     .catch(err => {
         console.log(`There's a problem getting the transaction ${transactionid}. Error: ${err}`)
-
         return res.status(400).json({message: "bad-request", data: "There's a problem getting the transaction. Please contact customer support!"})
     })
+
+    if (!transaction) {
+        return res.status(400).json({message: "failed", data: "No transaction is found! Please select a valid transaction"})
+    }
 
     let walletbalance = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(userid), type: "fiatbalance"})
     .then(data => data)
     .catch(err => {
         console.log(`There's a problem getting the wallet balance for user ${userid}. Error: ${err}`)
-        
         return res.status(400).json({message: "bad-request", data: "There's a problem getting the wallet balance. Please contact customer support!"})
     })
 
-
-
-    if (!transaction){
-        return res.status(400).json({message: "failed", data: "No transaction is found! Please select a valid transaction"})
-    }
-
-    if (walletbalance.amount > transaction.value){
+    // Changed condition to check if balance is LESS than transaction value
+    if (walletbalance.amount < transaction.value) {
         return res.status(400).json({message: "failed", data: "User does not have enough balance to delete the transaction"})
     }
 
-    await Payin.findByIdAndUpdate({_id: new mongoose.Types.ObjectId(transactionid)}, {status: "deleted"})
-    .catch(err => {
-        console.log(`There's a problem getting the changing the transaction ${transactionid}. Error: ${err}`)
+    // Using try-catch for better error handling
+    try {
+        await Payin.findByIdAndUpdate(
+            {_id: new mongoose.Types.ObjectId(transactionid)}, 
+            {status: "deleted"}
+        )
 
-        return res.status(400).json({message: "bad-request", data: "There's a problem changing the transaction Please contact customer support!"})
-    })
+        await Userwallets.findOneAndUpdate(
+            {owner: new mongoose.Types.ObjectId(userid), type: "fiatbalance"}, 
+            {$inc: {amount: -transaction.value}}
+        )
 
-    await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(userid), type: "fiatbalance"}, {$inc: {amount: -transaction.value}})
-    .catch(async err => {
-        console.log(`There's a problem getting the changing the transaction ${transactionid}. Error: ${err}`)
+        await deleteanalytics(transactionid)
+        
+        return res.json({message: "success"})
+    } catch (err) {
+        console.log(`Error in transaction deletion process: ${err}`)
+        
+        // Attempt to rollback the transaction status if there was an error
+        await Payin.findByIdAndUpdate(
+            {_id: new mongoose.Types.ObjectId(transactionid)}, 
+            {status: "done"}
+        ).catch(rollbackErr => {
+            console.log(`Rollback failed: ${rollbackErr}`)
+        })
 
-        await Payin.findByIdAndUpdate({_id: new mongoose.Types.ObjectId(transactionid)}, {status: "done"})
-
-        return res.status(400).json({message: "bad-request", data: "There's a problem changing the transaction Please contact customer support!"})
-    })
-
-    await deleteanalytics(transactionid)
-
-    return res.json({message: "success"})
+        return res.status(400).json({
+            message: "bad-request", 
+            data: "There was an error processing your request. Please contact customer support!"
+        })
+    }
 }
-
 exports.gettotalpayin = async(req, res)  => {
     const totalpayin = await Payin.aggregate(
         [
