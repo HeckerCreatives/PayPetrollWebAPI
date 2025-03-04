@@ -440,7 +440,7 @@ exports.deletepayinplayersuperadmin = async (req, res) => {
         return res.status(400).json({message: "failed", data: "No transaction is found! Please select a valid transaction"})
     }
 
-    if (walletbalance.amount < transaction.value){
+    if (walletbalance.amount > transaction.value){
         return res.status(400).json({message: "failed", data: "User does not have enough balance to delete the transaction"})
     }
 
