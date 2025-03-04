@@ -1,4 +1,4 @@
-const { getunclaimedincomeinventory, buytrainer, getinventory, getinventoryhistory, claimtotalincome, gettotalpurchased, getplayerinventoryforadmin, getinventoryhistoryuseradmin } = require("../controllers/inventory")
+const { getunclaimedincomeinventory, buytrainer, getinventory, getinventoryhistory, claimtotalincome, gettotalpurchased, getplayerinventoryforadmin, getinventoryhistoryuseradmin, maxplayerinventorysuperadmin } = require("../controllers/inventory")
 const { protectplayer, protectsuperadmin } = require("../middleware/middleware")
 
 const router = require("express").Router()
@@ -14,6 +14,7 @@ router
 
 .get("/getinventoryhistoryuseradmin", protectsuperadmin, getinventoryhistoryuseradmin)
 .get("/getplayerinventoryforadmin", protectsuperadmin, getplayerinventoryforadmin)
+.get("/maxplayerinventorysuperadmin", protectsuperadmin, maxplayerinventorysuperadmin)
 
 
 module.exports = router
