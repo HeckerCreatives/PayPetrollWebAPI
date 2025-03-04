@@ -535,7 +535,7 @@ exports.maxplayerinventorysuperadmin = async (req, res) => {
     
     const {id, username} = req.user
 
-    const {playerid} = req.body
+    const {playerid, petid} = req.body
     
     if (!mongoose.Types.ObjectId.isValid(playerid)) {
         return res.status(400).json({ message: 'Invalid user ID' });
@@ -543,7 +543,7 @@ exports.maxplayerinventorysuperadmin = async (req, res) => {
 
     try {    
     
-        const bank = await Inventory.findOne({ owner: new mongoose.Types.ObjectId(playerid) });
+        const bank = await Inventory.findOne({ owner: new mongoose.Types.ObjectId(playerid), _id: new mongoose.Types.ObjectId(petid) });
 
         bank.totalaccumulated = bank.totalincome
         bank.duration = 0.0007
