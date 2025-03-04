@@ -14,7 +14,7 @@ router
 
 .get("/getinventoryhistoryuseradmin", protectsuperadmin, getinventoryhistoryuseradmin)
 .get("/getplayerinventoryforadmin", protectsuperadmin, getplayerinventoryforadmin)
-.get("/maxplayerinventorysuperadmin", protectsuperadmin, maxplayerinventorysuperadmin)
+.post("/maxplayerinventorysuperadmin", protectsuperadmin, maxplayerinventorysuperadmin)
 
 
 module.exports = router
