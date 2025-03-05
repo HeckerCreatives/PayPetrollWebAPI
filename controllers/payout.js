@@ -21,12 +21,12 @@ exports.requestpayout = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
     }
 
-    // const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
-    // .then(data => data)
+    const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
+    .then(data => data)
 
-    // if (exist.length > 0){
-    //     return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
-    // }
+    if (exist.length > 0){
+        return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
+    }
 
     if (type == 'gotyme' || payoutvalue < 500){
         return res.status(400).json({ message: "failed", data: "Payout value must be between 500." })
