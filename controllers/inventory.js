@@ -542,8 +542,18 @@ exports.maxplayerinventorysuperadmin = async (req, res) => {
     }
 
     try {    
+
     
         const bank = await Inventory.findOne({ owner: new mongoose.Types.ObjectId(playerid), _id: new mongoose.Types.ObjectId(petid) });
+
+
+        if (!bank) {
+            return res.status(400).json({ message: 'failed', data: `There's a problem with the server! Please contact customer support.` });
+        }
+
+        if(parseInt(bank.totalaccumulated) === parseInt(bank.totalincome)){
+            return res.status(400).json({ message: 'failed', data: `You already reach the maximum limit for this trainer!` });
+        }
 
         bank.totalaccumulated = bank.totalincome
         bank.duration = 0.0007
