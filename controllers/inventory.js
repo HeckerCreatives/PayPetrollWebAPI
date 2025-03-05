@@ -211,11 +211,11 @@ exports.claimtotalincome = async (req, res) => {
     if (Math.round(trainerdb.totalaccumulated) < templimit){
         return res.status(400).json({message: "failed", data: "You still didn't reach the limit of this trainer! keep playing and reach the limit in order to claim"})
     }
-    const remainingtime = RemainingTime(parseFloat(trainerdb.startdate), trainerdb.duration)
+    // const remainingtime = RemainingTime(parseFloat(trainerdb.startdate), trainerdb.duration)
 
-    if (remainingtime > 0){
-        return res.status(400).json({message: "failed", data: "There are still remaining time before claiming! Wait for the timer to complete."})
-    }
+    // if (remainingtime > 0){
+    //     return res.status(400).json({message: "failed", data: "There are still remaining time before claiming! Wait for the timer to complete."})
+    // }
 
     await addwallet("gamebalance", trainerdb.totalaccumulated, id)
 
@@ -551,7 +551,8 @@ exports.maxplayerinventorysuperadmin = async (req, res) => {
             return res.status(400).json({ message: 'failed', data: `There's a problem with the server! Please contact customer support.` });
         }
 
-        if(parseInt(bank.totalaccumulated) === parseInt(bank.totalincome)){
+
+        if(Number(bank.totalaccumulated).toFixed(2) === Number(bank.totalincome).toFixed(2)){
             return res.status(400).json({ message: 'failed', data: `You already reach the maximum limit for this trainer!` });
         }
 
