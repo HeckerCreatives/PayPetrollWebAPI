@@ -51,7 +51,7 @@ exports.sendcommissionunilevel = async (commissionAmount, id, trainername, train
                 connectFromField: 'referral',
                 connectToField: '_id',
                 as: 'referralChain',
-                maxDepth: 9, // Set the maximum depth to your needs
+                maxDepth: 11, // Set the maximum depth to your needs
                 depthField: 'level',
             },
         },
