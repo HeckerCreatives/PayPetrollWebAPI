@@ -173,7 +173,29 @@ exports.sendcommissionunilevel = async (commissionAmount, id, trainername, train
                                     } 
                                 }
                             },
-                            { case: { $eq: ['$referralChain.level', 9] }, then: { $multiply: [commissionAmount, 0.01] } },
+                            { case: { $eq: ['$referralChain.level', 9] }, then: { $cond: {
+                                        if: { $eq: ['$referralChain._id', new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID)]},
+                                        then: {
+                                            $multiply: [commissionAmount, 0.02]
+                                        },
+                                        else : {
+                                            $multiply: [commissionAmount, 0.01]
+                                        }
+                                    } 
+                                }
+                            },
+                            { case: { $eq: ['$referralChain.level', 10] }, then: { $cond: {
+                                        if: { $eq: ['$referralChain._id', new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID)]},
+                                        then: {
+                                            $multiply: [commissionAmount, 0.02]
+                                        },
+                                        else : {
+                                            $multiply: [commissionAmount, 0.01]
+                                        }
+                                    } 
+                                }
+                            },
+                            { case: { $eq: ['$referralChain.level', 11] }, then: { $multiply: [commissionAmount, 0.01] } },
                         ],
                         default: 0,
                     },
