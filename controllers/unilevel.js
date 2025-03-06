@@ -111,11 +111,11 @@ exports.playerunilevel = async (req, res) => {
         {
             $sort: { _id: 1 },
         },
-        {
-            $match: {
-                _id: { $lte: 10 },
-            },
-        },
+        // {
+        //     $match: {
+        //         _id: { $lte: 10 },
+        //     },
+        // },
         {
             $project: {
                 _id: 1,
