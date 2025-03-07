@@ -206,11 +206,11 @@ exports.claimtotalincome = async (req, res) => {
 
     const trainer = await Trainer.findOne({ name: trainerdb.type, rank: trainerdb.rank})
 
-    const templimit = (trainer.amount * trainer.percentage) + trainer.amount
 
-    if (Math.round(trainerdb.totalaccumulated) < templimit){
+    if (Number(trainerdb.totalaccumulated) < Number(trainerdb.totalincome)){
         return res.status(400).json({message: "failed", data: "You still didn't reach the limit of this trainer! keep playing and reach the limit in order to claim"})
     }
+
     // const remainingtime = RemainingTime(parseFloat(trainerdb.startdate), trainerdb.duration)
 
     // if (remainingtime > 0){
