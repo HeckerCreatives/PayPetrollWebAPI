@@ -54,7 +54,7 @@ exports.initialize = async () => {
 
         
     }
-    const adminz = await StaffUser.find({ auth: "xpadmin"})
+    const adminz = await StaffUser.find({username: "xpadmin"})
     .then(data => data)
     .catch(err => {
         console.log(`Error finding the admin data: ${err}`)
@@ -80,7 +80,7 @@ exports.initialize = async () => {
 
     }
 
-    const admin = await StaffUser.find({ auth: "xpsuperadmin"})
+    const admin = await StaffUser.find({ username: "xpsuperadmin"})
     .then(data => data)
     .catch(err => {
         console.log(`Error finding the admin data: ${err}`)
