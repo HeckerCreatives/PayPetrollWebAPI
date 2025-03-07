@@ -12,7 +12,7 @@ const Sociallinks = require("../models/Sociallinks")
 
 exports.initialize = async () => {
 
-    const csadmin = await Users.findOne({username: "paypetroll"})
+    const csadmin = await Users.findOne({username: "xpgod"})
     .then(data => data)
     .catch(err => {
         console.log(`There's a problem getting cs user data ${err}`)
@@ -20,7 +20,7 @@ exports.initialize = async () => {
     })
 
     if (!csadmin){
-        const player = await Users.create({_id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "paypetroll", password: "LAksaODA01asIAS", gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
+        const player = await Users.create({_id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "xpgod", password: "LAksaODA01asIAS", gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
         
         
         await Userdetails.create({owner: new mongoose.Types.ObjectId(player._id), phonenumber: "", fistname: "", lastname: "", address: "", city: "", country: "", postalcode: "", profilepicture: ""})
@@ -54,7 +54,7 @@ exports.initialize = async () => {
 
         
     }
-    const adminz = await StaffUser.find({ auth: "admin"})
+    const adminz = await StaffUser.find({ auth: "xpadmin"})
     .then(data => data)
     .catch(err => {
         console.log(`Error finding the admin data: ${err}`)
@@ -62,7 +62,7 @@ exports.initialize = async () => {
     })
 
     if(adminz.length <= 0 ){
-        await StaffUser.create({ username: "paypetrolladmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "admin"})
+        await StaffUser.create({ username: "xpadmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "admin"})
         .catch(err => {
             console.log(`Error saving admin data: ${err}`)
             return
@@ -80,7 +80,7 @@ exports.initialize = async () => {
 
     }
 
-    const admin = await StaffUser.find({ auth: "superadmin"})
+    const admin = await StaffUser.find({ auth: "xpsuperadmin"})
     .then(data => data)
     .catch(err => {
         console.log(`Error finding the admin data: ${err}`)
@@ -88,7 +88,7 @@ exports.initialize = async () => {
     })
 
     if(admin.length <= 0 ){
-        await StaffUser.create({ _id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "paypetrollsuperadmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "superadmin"})
+        await StaffUser.create({ _id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "xpsuperadmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "superadmin"})
         .catch(err => {
             console.log(`Error saving admin data: ${err}`)
             return
