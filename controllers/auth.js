@@ -83,7 +83,7 @@ exports.register = async (req, res) => {
         return res.status(400).json({message: "failed", data: "You already registered this account! Please login if this is yours."})
     }
 
-    const player = await Users.create({username: username, password: password.toLowerCase(), referral: new mongoose.Types.ObjectId(referral), gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
+    const player = await Users.create({username: username, password: password, referral: new mongoose.Types.ObjectId(referral), gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
     .catch(err => {
 
         console.log(`There's a problem creating user for ${username} Error: ${err}`)
