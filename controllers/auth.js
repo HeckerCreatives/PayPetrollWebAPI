@@ -155,7 +155,7 @@ exports.authlogin = async(req, res) => {
         return res.status(400).json({message: "failed", data: "Minimum of 5 and maximum of 20 characters only for password! Please try again."})
     }
 
-    const passwordRegex = /^[a-zA-Z0-9\[\]!@#*]+$/;
+    const passwordRegex = /^[a-zA-Z0-9]+$/;
 
     if (!passwordRegex.test(password)){
         return res.status(400).json({message: "failed", data: "Only []!@#* are supported special characters for password! Please try again."})
@@ -263,7 +263,7 @@ exports.authlogin = async(req, res) => {
     } else {
         Users.findOne({ username: { $regex: new RegExp('^' + username + '$', 'i') } })
         .then(async user => {
-            if (user && (await user.matchPassword(password))){
+            if (user && (await user.matchPassword(password.toLowerCase()))){
             if (user.status != "active"){
                 return res.status(400).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
             }
