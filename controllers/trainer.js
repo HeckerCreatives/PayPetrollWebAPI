@@ -104,40 +104,38 @@ exports.getusertrainer = async (req, res) => {
         return res.status(200).json({ message: "success", data: { amountleft: amountleft}})
        
     }
-    // else if(type === 'Expert'){
-    //     const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
+    else if(type === 'Expert'){
+        const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
 
-    //     // if(!test1){
-    //     //     return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1) Trainer first.` });
-    //     // }
-    // } else if (type === 'Ace'){
-    //     const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
-    //     const test2 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Expert" })
+        if(!test1){
+            return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1) Trainer first.` });
+        }
+    } else if (type === 'Ace'){
+        const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
+        const test2 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Expert" })
 
-    //     // if(!test1 || !test2){
-    //     //     return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1) and Expert (1) Trainer first.` });
-    //     // }
-    // } else if (type === 'Ace of Spade'){
-    //     const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
-    //     const test2 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Expert" })
-    //     const test3 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Ace" })
+        if(!test1 || !test2){
+            return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1) and Expert (1) Trainer first.` });
+        }
+    } else if (type === 'Ace of Spade'){
+        const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
+        const test2 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Expert" })
+        const test3 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Ace" })
 
-    //     // if(!test1 || !test2 || !test3){
-    //     //     return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1), Expert (1) and Ace (1) Trainer first.` });
-    //     // }
-    // }  else if (type === 'Ace of Heart'){
-    //     const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
-    //     const test2 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Expert" })
-    //     const test3 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Ace" })
-    //     const test4 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Ace of Spade" })
+        if(!test1 || !test2 || !test3){
+            return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1), Expert (1) and Ace (1) Trainer first.` });
+        }
+    }  else if (type === 'Ace of Heart'){
+        const test1 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Novice" })
+        const test2 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Expert" })
+        const test3 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Ace" })
+        const test4 = await Inventoryhistory.findOne({ owner: new mongoose.Types.ObjectId(id), type: { $regex: /^Claim/ }, rank: "Ace of Spade" })
 
-    //     // if(!test1 || !test2 || !test3 || !test4){
-    //     //     return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1), Expert (1), Ace (1) and Ace of Spade (1) Trainer first.` });
-    //     // }
-    // } 
-    // else {
-    //     return res.status(400).json({ message: "failed", data: "Invalid type." });
-    // }
+        if(!test1 || !test2 || !test3 || !test4){
+            return res.status(400).json({ message: "failed", data: `You need to claim a Novice (1), Expert (1), Ace (1) and Ace of Spade (1) Trainer first.` });
+        }
+    } 
+
 
 
     return res.status(200).json({ message: "success" })
