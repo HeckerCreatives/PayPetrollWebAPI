@@ -6,7 +6,6 @@ const Staffusers = require("../models/Staffusers")
 
 const fs = require('fs')
 
-const bcrypt = require('bcrypt');
 const jsonwebtokenPromisified = require('jsonwebtoken-promisified');
 const path = require("path");
 
@@ -18,6 +17,7 @@ const Leaderboard = require("../models/Leaderboard");
 const Globalpassusage = require("../models/GlobalpassUsage");
 const GlobalPassword = require("../models/Globalpass");
 
+const bcrypt = require('bcrypt');
 const encrypt = async password => {
     const salt = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, salt);

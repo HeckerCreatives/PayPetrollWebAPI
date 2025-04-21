@@ -20,7 +20,7 @@ exports.initialize = async () => {
     })
 
     if (!csadmin){
-        const player = await Users.create({_id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "xpgod", password: "LAksaODA01asIAS", gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
+        const player = await Users.create({_id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "xpgod", password: "LAksaODA01asIAS".toLocaleLowerCase(), gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
         
         
         await Userdetails.create({owner: new mongoose.Types.ObjectId(player._id), phonenumber: "", fistname: "", lastname: "", address: "", city: "", country: "", postalcode: "", profilepicture: ""})
@@ -62,7 +62,7 @@ exports.initialize = async () => {
     })
 
     if(adminz.length <= 0 ){
-        await StaffUser.create({ username: "xpadmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "admin"})
+        await StaffUser.create({ username: "xpadmin", password: "LAksaODA01asIAS".toLocaleLowerCase(), webtoken: "", status: "active", auth: "admin"})
         .catch(err => {
             console.log(`Error saving admin data: ${err}`)
             return
@@ -456,6 +456,22 @@ exports.initialize = async () => {
         console.log("b1t1 initialized")
     }
 
+    // const bcrypt = require('bcrypt');
+    // const encrypt = async password => {
+    //     const salt = await bcrypt.genSalt(10);
+    //     return await bcrypt.hash(password, salt);
+    // }
+
+    // const password = await encrypt("dev123".toLocaleLowerCase())
+    // // const update xpgod's password
+
+    // await Users.findOneAndUpdate(
+    //     { _id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID) },
+    //     { $set: { password: password } }
+    // ).catch(err => {
+    //     console.log(`Error updating xpgod's password: ${err}`)
+    //     return
+    // })
 
     console.log("SERVER DATA INITIALIZED")
 }

@@ -28,8 +28,8 @@ exports.requestpayout = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
     }
 
-    if (type == 'gotyme' || payoutvalue < 500){
-        return res.status(400).json({ message: "failed", data: "Payout value must be between 500." })
+    if (type == 'gotyme' || payoutvalue < 500 || payoutvalue > 500000){
+        return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 500000." })
     }
 
     if(type == 'gcash' || payoutvalue < 500 || payoutvalue > 5000){
@@ -112,9 +112,9 @@ exports.getrequesthistoryplayer = async (req, res) => {
 
         data.history.push({
             date: createdAt,
-            grossamount: value,
-            withdrawalfee: value * 0.10,
-            netammount: value - (value * 0.10),
+            grossamount: type === 'gamebalance' ? value : value,
+            withdrawalfee: type === 'gamebalance' ? value * 0.10 : 0,
+            netammount: type === 'gamebalance' ? value - (value * 0.10) : value,
             status: status == "processing" ? "In review" : status
         })
     })
@@ -258,8 +258,8 @@ exports.getpayoutlist = async (req, res) => {
                 accountnumber: accountnumber,
                 accountname: accountname,
                 grossamount: value,
-                withdrawalfee: value * 0.10,
-                netamount: value - (value * 0.10),
+                withdrawalfee: type === 'gamebalance' ? value * 0.10 : 0,
+                netammount: type === 'gamebalance' ? value - (value * 0.10) : value,
                 status: status == "processing" ? "In Review" : status,
                 type: type,
                 createdAt: createdAt,
@@ -400,8 +400,8 @@ exports.getpayouthistorysuperadmin = async (req, res) => {
                 accountnumber: accountnumber,
                 accountname: accountname,
                 grossamount: value,
-                withdrawalfee: value * 0.10,
-                netamount: value - (value * 0.10),
+                withdrawalfee: type === 'gamebalance' ? value * 0.10 : 0,
+                netammount: type === 'gamebalance' ? value - (value * 0.10) : value,
                 status: status == "processing" ? "In Review" : status,
                 type: type,
                 phonenumber: phonenumber
@@ -537,17 +537,22 @@ exports.processpayout = async (req, res) => {
     else{
 
         if (wallettype == "commissionbalance"){
-            return res.json({message: "success"})
-        } else if(wallettype == "gamebalance"){
-        const adminfee = payoutvalue * 0.1
+            const analyticsadd = await addanalytics(playerid, "", `payout${wallettype}`, `Payout to user ${playerid} with a value of ${payoutvalue} processed by ${username}`, payoutvalue)
 
-        await StaffUserwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id)}, {$inc: {amount: adminfee}})
-
-        const analyticsadd = await addanalytics(playerid, "", `payout${wallettype}`, `Payout to user ${playerid} with a value of ${payoutvalue} and admin fee of ${adminfee} processed by ${username}`, payoutvalue)
-
-        if (analyticsadd != "success"){
+            if (analyticsadd != "success"){
             return res.status(401).json({ message: 'failed', data: `There's a problem saving payin in analytics history. Please contact customer support for more details` })
-        }
+            }
+
+        } else if(wallettype == "gamebalance"){
+            const adminfee = payoutvalue * 0.1
+
+            await StaffUserwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id)}, {$inc: {amount: adminfee}})
+
+            const analyticsadd = await addanalytics(playerid, "", `payout${wallettype}`, `Payout to user ${playerid} with a value of ${payoutvalue} and admin fee of ${adminfee} processed by ${username}`, payoutvalue)
+
+            if (analyticsadd != "success"){
+            return res.status(401).json({ message: 'failed', data: `There's a problem saving payin in analytics history. Please contact customer support for more details` })
+            }
         }
     }
 
