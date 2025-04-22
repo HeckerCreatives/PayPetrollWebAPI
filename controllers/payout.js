@@ -14,7 +14,7 @@ exports.requestpayout = async (req, res) => {
     const maintenance = await checkmaintenance("payout")
 
     if (maintenance == "maintenance"){
-        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from 12:00pm - 11:59pm Friday PST." })
+        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from 12:00pm - 11:59pm Monday PST." })
     }
 
     else if (maintenance != "success"){
