@@ -29,7 +29,7 @@ exports.requestpayout = async (req, res) => {
     }
 
     if (paymentmethod == 'gotyme'){
-        if (payoutvalue < 500 || payoutvalue > 500000){
+        if (payoutvalue < 500 || payoutvalue > 500001){
             return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 500000." })
         }
     }
@@ -45,6 +45,7 @@ exports.requestpayout = async (req, res) => {
         console.log(`There's a problem getting leaderboard data ${err}`)
         return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
     })
+
 
     if (payoutvalue > wallet.amount){
         return res.status(400).json({ message: "failed", data: "The amount is greater than your wallet balance" })
