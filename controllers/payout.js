@@ -28,11 +28,11 @@ exports.requestpayout = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
     }
 
-    if (type == 'gotyme' || payoutvalue < 500 || payoutvalue > 500000){
+    if (type == 'gotyme' && (payoutvalue < 500 || payoutvalue > 500000)){
         return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 500000." })
     }
 
-    if(type == 'gcash' || payoutvalue < 500 || payoutvalue > 5000){
+    if(type == 'gcash' && (payoutvalue < 500 || payoutvalue > 5000)){
         return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 5000" })
     }
     const wallet = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(id), type: type})
