@@ -28,13 +28,13 @@ exports.requestpayout = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
     }
 
-    if (type == 'gotyme'){
+    if (paymentmethod == 'gotyme'){
         if (payoutvalue < 500 || payoutvalue > 500000){
             return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 500000." })
         }
     }
 
-    if(type == 'gcash' ){
+    if(paymentmethod == 'gcash' ){
         if (payoutvalue < 500 || payoutvalue > 5000){
         return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 5000" })
         }
