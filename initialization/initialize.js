@@ -474,7 +474,7 @@ exports.initialize = async () => {
     // })
 
 
-    const findacetrainer = await Trainer.find({rank: "Ace"})
+    const findeliteacetrainer = await Trainer.find({rank: "Elite"})
     .then(data => data)
     .catch(err => {
         console.log(`Error finding ace trainer: ${err}`)
@@ -483,17 +483,10 @@ exports.initialize = async () => {
 
     // change all ace trainer to Elite
 
-    if(findacetrainer.length > 0){
-        findacetrainer.forEach(async trainer => {
-            await Trainer.findOneAndUpdate({_id: new mongoose.Types.ObjectId(trainer._id)}, { $set: { rank: "Elite" } })
-            .catch(err => {
-                console.log(`Error updating trainer rank: ${err}`)
-                return
-            })
-          console.log("Trainer rank updated to Elite")
-        })
+    if(findeliteacetrainer.length < 1){
+        await Trainer.updateMany({rank: "Ace"}, { $set: { rank: "Elite" } })
+        console.log("Ace trainer changed to Elite")
     }
-
 
     
 
