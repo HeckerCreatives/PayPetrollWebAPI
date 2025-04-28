@@ -473,5 +473,29 @@ exports.initialize = async () => {
     //     return
     // })
 
+
+    const findacetrainer = await Trainer.find({rank: "Ace"})
+    .then(data => data)
+    .catch(err => {
+        console.log(`Error finding ace trainer: ${err}`)
+        return
+    })
+
+    // change all ace trainer to Elite
+
+    if(findacetrainer.length > 0){
+        findacetrainer.forEach(async trainer => {
+            await Trainer.findOneAndUpdate({_id: new mongoose.Types.ObjectId(trainer._id)}, { $set: { rank: "Elite" } })
+            .catch(err => {
+                console.log(`Error updating trainer rank: ${err}`)
+                return
+            })
+          console.log("Trainer rank updated to Elite")
+        })
+    }
+
+
+    
+
     console.log("SERVER DATA INITIALIZED")
 }

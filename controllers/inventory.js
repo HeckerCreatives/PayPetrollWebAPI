@@ -116,7 +116,7 @@ exports.buytrainer = async (req, res) => {
     
     const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount)
     
-    await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount)
+    await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, amount)
 
         await Inventory.create({
             owner: new mongoose.Types.ObjectId(id), 
