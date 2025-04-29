@@ -284,12 +284,14 @@ exports.getinventory = async (req, res) => {
     };
 
     try {
+        const rankFilter = rank === "Elite" ? { $in: ["Elite", "Ace"] } : rank === "Ace" ? { $in: ["Ace", "Elite"] } : rank;
+
         const [trainer, totalDocuments] = await Promise.all([
-            Inventory.find({ owner: id, rank: rank })
+            Inventory.find({ owner: id, rank: rankFilter })
                 .skip(pageOptions.page * pageOptions.limit)
                 .limit(pageOptions.limit)
                 .sort({ 'createdAt': -1 }),
-            Inventory.countDocuments({ owner: id, rank: rank })
+            Inventory.countDocuments({ owner: id, rank: rankFilter })
         ]);
 
         const pages = Math.ceil(totalDocuments / pageOptions.limit);
