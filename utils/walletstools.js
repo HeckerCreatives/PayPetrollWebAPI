@@ -243,10 +243,29 @@ exports.sendcommissionunilevel = async (commissionAmount, id, trainername, train
 
     const bulkOperationUnilvl = unilevelresult.map(({_id, amount }) => ({
         updateOne: {
-            filter: { owner: new mongoose.Types.ObjectId(_id), type: 'commissionbalance' },
+            filter: { owner: new mongoose.Types.ObjectId(_id), type: 'directcommissionbalance' },
             update: { $inc: { amount: amount}}
         }
     }))
+
+    const bulkOperationUnilvl2 = unilevelresult.map(({_id, amount, level }) => ({
+        updateOne: {
+            filter: { 
+                owner: new mongoose.Types.ObjectId(_id), 
+                type: level === 0 ? 'directwallet' : 'unilevelwallet'
+            },
+            update: { $inc: { amount: amount }}
+        }
+    }));
+
+    await Userwallets.bulkWrite(bulkOperationUnilvl2)
+    .catch(err => {
+
+        console.log(`Failed to distribute commission wallet data, unilevel parent: ${id} commission amount: ${commissionAmount}, error: ${err}`)
+
+        return "failed"
+    })
+
 
     await Userwallets.bulkWrite(bulkOperationUnilvl)
     .catch(err => {

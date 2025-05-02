@@ -8,71 +8,162 @@ const Conversionrate = require("../models/Conversionrate")
 const StaffUserwallets = require("../models/Staffuserwallets")
 
 exports.requestpayout = async (req, res) => {
-    const {id, username} = req.user
-    const {type, payoutvalue, paymentmethod, accountname, accountnumber} = req.body
+    const { id, username } = req.user;
+    const { type, payoutvalue, paymentmethod, accountname, accountnumber } = req.body;
 
-    const maintenance = await checkmaintenance("payout")
 
-    if (maintenance == "maintenance"){
-        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from 12:00pm - 11:59pm Monday PST." })
+    if (paymentmethod.toLowerCase() === "gcash" && payoutvalue > 5000) {
+        return res.status(400).json({ message: "failed", data: "Gcash pay out maximum value is ₱5000." });
     }
 
-    else if (maintenance != "success"){
-        return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
+
+    if (paymentmethod.toLowerCase() === "gotyme" && payoutvalue < 0) {
+        return res.status(400).json({ message: "failed", data: "GoTyme pay out minimum value is ₱0." });
     }
 
-    const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
-    .then(data => data)
-
-    if (exist.length > 0){
-        return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
+    if (paymentmethod.toLowerCase() === "cimb" && payoutvalue > 5000) {
+        return res.status(400).json({ message: "failed", data: "CIMB pay out maximum value is ₱5000." });
     }
 
-    if (paymentmethod == 'gotyme'){
-        if (payoutvalue < 500 || payoutvalue > 500001){
-            return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 500000." })
-        }
+
+    const maintenances = await Maintenance.findOne({ type: "payout" }).then((data) => data);
+
+     if (maintenances.value == "1") {
+         return res.status(400).json({ message: "failed", data: "Request payout is only available during friday." });
+     }
+
+    const exist = await Payout.find({
+        owner: new mongoose.Types.ObjectId(id),
+        type: type,
+        status: "processing"
+    }).then((data) => data);
+
+    if (exist.length > 0) {
+        return res.status(400).json({
+            message: "failed",
+            data: "There's an existing request! Please wait for it to be processed before requesting another payout."
+        });
     }
 
-    if(paymentmethod == 'gcash' ){
-        if (payoutvalue < 500 || payoutvalue > 5000){
-        return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 5000" })
-        }
+    const wallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: type })
+        .then((data) => data)
+        .catch((err) => {
+            console.log(`There's a problem getting leaderboard data ${err}`);
+            return res.status(400).json({
+                message: "bad-request",
+                data: "There's a problem with the server! Please contact customer support for more details."
+            });
+        });
+
+    const unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "unilevelbalance" })
+        .then((data) => data)
+        .catch((err) => {
+            console.log(`There's a problem getting unilevel wallet data ${err}`);
+            return res.status(400).json({
+                message: "bad-request",
+                data: "There's a problem with the server! Please contact customer support for more details."
+            });
+        });
+
+    const directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "directbalance" })
+        .then((data) => data)
+        .catch((err) => {
+            console.log(`There's a problem getting direct wallet data ${err}`);
+            return res.status(400).json({
+                message: "bad-request", 
+                data: "There's a problem with the server! Please contact customer support for more details."
+            });
+        });
+    let totalBalance = 0
+
+    if(type == "commissionwallet"){
+     totalBalance = unilevelwallet.amount + directwallet.amount;
+    } else if (type == "gamebalance"){
+        totalBalance = wallet.amount
     }
-    const wallet = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(id), type: type})
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting leaderboard data ${err}`)
-        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
-    })
 
-
-    if (payoutvalue > wallet.amount){
-        return res.status(400).json({ message: "failed", data: "The amount is greater than your wallet balance" })
+    if (payoutvalue > totalBalance) {
+        return res.status(400).json({
+            message: "failed",
+            data: "The amount is greater than your combined wallet balance"
+        });
     }
 
-    await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id), type: type}, {$inc: {amount: -payoutvalue}})
-    .catch(err => {
-        console.log(`There's a problem deducting payout value for ${username} with value ${payoutvalue}. Error: ${err}`)
-        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
-    })
+    const balanceleft = totalBalance - payoutvalue
 
-    await Payout.create({owner: new mongoose.Types.ObjectId(id), status: "processing", value: payoutvalue, type: type, paymentmethod: paymentmethod, accountname: accountname, accountnumber: accountnumber})
-    .catch(async err => {
+    if (type == "commissionwallet") {
+    await Userwallets.findOneAndUpdate(
+        { owner: new mongoose.Types.ObjectId(id), type: type },
+        { $set: { amount: balanceleft } }
+    ).catch((err) => {
+        console.log(`There's a problem deducting payout value for ${username} with value ${payoutvalue}. Error: ${err}`);
+        return res.status(400).json({
+            message: "bad-request",
+            data: "There's a problem with the server! Please contact customer support for more details."
+        });
+    });
+    
+    if (payoutvalue > directwallet.amount) {
+        const deductamount =  payoutvalue - directwallet.amount
+        
+        directwallet.amount = 0
+        
+        unilevelwallet.amount = unilevelwallet.amount - deductamount
+        
+        await unilevelwallet.save()
+        await directwallet.save()
+    } else {
+        const deductamount = directwallet.amount - payoutvalue
+        directwallet.amount = deductamount
+        await directwallet.save()
+    }
+    } else if (type == "chronocoinwallet") {
+        await Userwallets.findOneAndUpdate(
+            { owner: new mongoose.Types.ObjectId(id), type: type },
+            { $inc: { amount: -payoutvalue } }
+        ).catch((err) => {
+            console.log(`There's a problem deducting payout value for ${username} with value ${payoutvalue}. Error: ${err}`);
+            return res.status(400).json({
+                message: "bad-request",
+                data: "There's a problem with the server! Please contact customer support for more details."
+            });
+        });
+    } else {
+        return res.status(400).json({
+            message: "failed",
+            data: "Invalid wallet type."
+        });
+    }
 
-        await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id), type: type}, {$inc: {amount: payoutvalue}})
-        .catch(err => {
-            console.log(`There's a problem getting leaderboard data ${err}`)
-            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
-        })
+    await Payout.create({
+        owner: new mongoose.Types.ObjectId(id),
+        status: "processing",
+        value: payoutvalue,
+        type: type,
+        paymentmethod: paymentmethod,
+        accountname: accountname,
+        accountnumber: accountnumber
+    }).catch(async (err) => {
+        await Userwallets.findOneAndUpdate(
+            { owner: new mongoose.Types.ObjectId(id), type: type },
+            { $inc: { amount: payoutvalue } }
+        ).catch((err) => {
+            console.log(`There's a problem getting leaderboard data ${err}`);
+            return res.status(400).json({
+                message: "bad-request",
+                data: "There's a problem with the server! Please contact customer support for more details."
+            });
+        });
 
-        console.log(`There's a problem getting leaderboard data ${err}`)
-        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
-    })
+        console.log(`There's a problem getting leaderboard data ${err}`);
+        return res.status(400).json({
+            message: "bad-request",
+            data: "There's a problem with the server! Please contact customer support for more details."
+        });
+    });
 
-    return res.json({message: "success"})
-}
-
+    return res.json({ message: "success" });
+};
 exports.getrequesthistoryplayer = async (req, res) => {
     const {id, username} = req.user
     const {type, page, limit} = req.query
@@ -536,7 +627,15 @@ exports.processpayout = async (req, res) => {
 
             console.log(`Failed to process Payout data for ${username}, player: ${playerid}, payinid: ${payinid} error: ${err}`)
     
-            return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+            return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+        })
+
+        await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(playerid), type: "directbalance"}, {$inc: {amount: payoutvalue}})
+        .catch(err => {
+
+            console.log(`Failed to process Payout data for ${username}, player: ${playerid}, payinid: ${payinid} error: ${err}`)
+    
+            return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
         })
     }
     else{

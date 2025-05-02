@@ -206,6 +206,9 @@ exports.claimtotalincome = async (req, res) => {
 
     const trainer = await Trainer.findOne({ name: trainerdb.type, rank: trainerdb.rank})
 
+    if(!trainer){
+        return res.status(400).json({message: "failed", data: "No trainer is selected"})
+    }
 
     if (Number(trainerdb.totalaccumulated) < Number(trainerdb.totalincome)){
         return res.status(400).json({message: "failed", data: "You still didn't reach the limit of this trainer! keep playing and reach the limit in order to claim"})
@@ -228,12 +231,12 @@ exports.claimtotalincome = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem getting the finishing Trainer data! Please contact customer support"})
     })
 
-    const wallethistory = await addwallethistory(id, "gamebalance", trainerdb.totalaccumulated, process.env.PAYPETROLLS_ID, trainer.name, trainer.rank)
+    const wallethistory = await addwallethistory(id, "gamebalance", trainerdb.totalaccumulated, process.env.PAYPETROLLS_ID, trainer.petname, trainer.rank)
 
     if (wallethistory.message != "success"){
         return res.status(400).json({message: "bad-request", data: "There's a problem processing your data. Please contact customer support"})
     }
-    await saveinventoryhistory(id, `${trainer.name}`, trainer.rank, `Claim ${trainer.name}`, trainerdb.totalaccumulated)
+    await saveinventoryhistory(id, `${trainer.petname}`, trainer.rank, `Claim ${trainer.petname}`, trainerdb.totalaccumulated)
 
     await addanalytics(id, wallethistory.data.transactionid, `gamebalance`, `Player ${username} claim ${trainerdb.totalaccumulated} in Trainer ${trainerdb.type}`, trainerdb.totalaccumulated)
 
@@ -565,6 +568,37 @@ exports.maxplayerinventorysuperadmin = async (req, res) => {
 
         return res.status(200).json({ message: "success"});
         
+    } catch (error) {
+        console.error(error)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support."});
+    }
+}
+
+exports.deleteplayerinventorysuperadmin = async (req, res) => {
+    const {id, username} = req.user
+
+    const {petid} = req.body
+    
+    try {    
+
+    
+        const bank = await Inventory.findOne({  _id: new mongoose.Types.ObjectId(petid) });
+
+        if (!bank) {
+            return res.status(400).json({ message: 'failed', data: `There's a problem with the server! Please contact customer support.` });
+        }
+
+        await Inventory.findOneAndDelete({ _id: new mongoose.Types.ObjectId(petid) })
+        .then(data => data)
+        .catch(err => {
+            console.log(`There's a problem getting the trainer data for ${username}. Error: ${err}`)
+            
+            return res.status(400).json({message: "bad-request", data: "There's a problem getting the trainer data! Please contact customer support"})
+        })
+
+        return res.status(200).json({ message: "success"});
+
     } catch (error) {
         console.error(error)
 

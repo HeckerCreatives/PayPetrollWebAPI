@@ -8,6 +8,9 @@ const StaffUserwallets = require("../models/Staffuserwallets")
 const Maintenance = require("../models/Maintenance")
 const Leaderboard = require("../models/Leaderboard")
 const Sociallinks = require("../models/Sociallinks")
+const Wallethistory = require("../models/Wallethistory")
+const Payout = require("../models/Payout")
+const Analytics = require("../models/Analytics")
 
 
 exports.initialize = async () => {
@@ -488,6 +491,80 @@ exports.initialize = async () => {
         console.log("Ace trainer changed to Elite")
     }
 
+
+    const newwallets = ["directbalance", "unilevelbalance"]
+ 
+    const allUsers = await Users.find()
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting all user data ${err}`)
+        return
+    })
+
+    if (allUsers.length > 0){
+        for(const user of allUsers) {
+            const existingWallets = await Userwallets.find({ owner: user._id })
+                .then(data => data)
+                .catch(err => {
+                    console.log(`There's a problem getting user wallets ${err}`)
+                    return
+                });
+
+            const existingWalletTypes = existingWallets.map(wallet => wallet.type);
+            
+            const needsNewWallets = newwallets.filter(type => !existingWalletTypes.includes(type));
+
+            if (needsNewWallets.length > 0) {
+                // Calculate balances from commission history
+                const totalHistory = await Wallethistory.aggregate([
+                    { $match: { owner: user._id, type: "commissionbalance", status: { $ne: "deleted" } } },
+                    { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+                ]);
+
+                const historyAmount = totalHistory.length > 0 ? totalHistory[0].totalAmount : 0;
+
+                const totalWithdrawals = await Analytics.aggregate([
+                    { $match: { owner: user._id, type: 'payoutcommisionbalance' } },
+                    { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+                ]);
+
+                const withdrawalAmount = totalWithdrawals.length > 0 ? totalWithdrawals[0].totalAmount : 0;
+                const totalAmount = historyAmount - withdrawalAmount;
+                
+                const directbalance = totalAmount * 0.8;
+                const unilevelbalance = totalAmount * 0.2;
+
+                const walletDocs = [
+                    { owner: user._id, type: "directbalance", amount: directbalance },
+                    { owner: user._id, type: "unilevelbalance", amount: unilevelbalance },
+                    { owner: user._id, type: "commissionbalance", amount: totalAmount },
+                    { owner: user._id, type: "fiatbalance", amount: 0 },
+                    { owner: user._id, type: "gamebalance", amount: 0 },
+
+                ];
+
+                await Userwallets.insertMany(walletDocs)
+                    .catch(err => {
+                        console.log(`There's a problem creating user wallets ${err}`)
+                        return
+                    });
+
+                console.log(`New wallets created for user ${user.username}`)
+            }
+        }
+    }
+
+
+    const wallets = ["fiatbalance", "gamebalance", "commissionbalance", "directbalance", "unilevelbalance"]
+
+    // delete wallets that are not in the list
+
+    await Userwallets.deleteMany({ type: { $nin: wallets } })
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem deleting user wallets ${err}`)
+        return
+    })
     
 
     console.log("SERVER DATA INITIALIZED")
