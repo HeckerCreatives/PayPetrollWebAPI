@@ -545,32 +545,40 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
         history.amount = parseFloat(amount);
         await history.save();
 
-        // Recalculate the total wallet history amount
-        const totalHistory = await Wallethistory.aggregate([
-            { $match: { owner: history.owner, type: history.type, status: { $ne: "deleted" } } },
-            { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-        ]);
+        let newwallettype 
 
-        const historyAmount = totalHistory.length > 0 ? totalHistory[0].totalAmount : 0;
+        if (history.type === "fiatbalance") {
+            newwallettype = "fiatbalance"
+        } else if (history.type === "gamebalance") {
+            newwallettype = "gamebalance"
+        } else if (history.type === "unilevelbalance") {
+            newwallettype = "commissionbalance"
+        } else if (history.type === "directbalance") {
+            newwallettype = "directreferralbalance"
+        }
 
-        // Fetch the total withdrawn amount from the Payout collection
-        const totalWithdrawals = await Payout.aggregate([
-            { $match: { owner: history.owner, type: history.type, status: "done" } },
-            { $group: { _id: null, totalAmount: { $sum: "$value" } } },
-        ]);
+        // get the current wallet balance of the user
 
-        const withdrawalAmount = totalWithdrawals.length > 0 ? totalWithdrawals[0].totalAmount : 0;
+        const wallet = await Userwallets.findOne({ owner: history.owner, type: newwallettype });
+        if (!wallet) {
+            return res.status(400).json({ message: "failed", data: "Wallet not found." });
+        }
 
-        // Recalculate the wallet balance
-        const newBalance = historyAmount - withdrawalAmount;
+        // increment or decrement the wallet balance based on the new amount
 
-        // Update the wallet balance in the Userwallets collection
+        const difference = parseFloat(amount) - history.amount;
         await Userwallets.findOneAndUpdate(
             { owner: history.owner, type: history.type },
-            { amount: newBalance }
-        );
+            { $inc: { amount: difference } }
+        )
+        .then(data => data)
+        .catch(err => {
+            console.log(`There's a problem encountered while updating ${historyid} wallet history. Error: ${err}`)
+            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details."})
+        })
 
-        return res.status(200).json({ message: "success", data: "Wallet history updated and balance recalculated." });
+
+        return res.status(200).json({ message: "success" });
     } catch (err) {
         console.log(`Failed to edit wallet history for ${username}, history id: ${historyid}, Error: ${err}`);
         return res.status(500).json({ message: "failed", data: "An error occurred while editing the wallet history." });
