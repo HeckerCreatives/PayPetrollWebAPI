@@ -71,6 +71,7 @@ exports.getuserdetailssuperadmin = async (req, res) => {
         username: details.username,
         status: details.status,
         referral: details.referral ? details.referral.username : "No Referral",
+        referralid: details.referral ? details.referral._id : '',
     }
 
     return res.json({message: "success", data: data})
