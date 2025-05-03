@@ -70,28 +70,67 @@ exports.edituserwalletforadmin = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "Amount cannot be negative." });
     }
 
-    const totalHistory = await Wallethistory.aggregate([
-        { $match: { owner: new mongoose.Types.ObjectId(ownerId), type: wallettype } },
-        { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-    ]);
+    let type 
+    let newwallettype 
 
-    // negate the previous total amount
-    await Wallethistory.create({
-        owner: wallet.owner,
-        type: wallettype,
-        amount: -totalHistory[0].totalAmount,
-        from: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID),
-     })
-     .then(data => data)
-     .catch(err => {
-        console.log(`There's a problem encountered while creating ${playerid} wallet history. Error: ${err}`)
+    if (wallettype === "fiatbalance") {
+        type = "payinfiatbalance"
+        newwallettype = "fiatbalance"
+    } else if (wallettype === "gamebalance") {
+        type = "buy"
+        newwallettype = "gamebalance"
+    } else if (wallettype === "unilevelbalance") {
+        type = "commissionbalance"
+        newwallettype = "commissionbalance"
+    } else if (wallettype === "directbalance") {
+        type = "directreferralbalance"
+        newwallettype = "directreferralbalance"
+    }
+
+    const wallet = await Userwallets.findOne({
+        owner: new mongoose.Types.ObjectId(playerid),
+        type: wallettype
+    })
+    .then(data => data)
+    .catch(err => {
+        console.log(`Failed to find wallet for ${playerid}, error: ${err}`)
         return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details." })
-     })
+    })
+
+    if (!wallet) {
+        return res.status(404).json({ message: "bad-request", data: "Wallet not found" })
+    }
+
+    if (wallet.amount > 0) {
+        await Wallethistory.create({
+            owner: playerid,
+            type: newwallettype,
+            amount: -wallet.amount,
+            from: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID),
+        })
+        .then(data => data)
+        .catch(err => {
+            console.log(`Failed to create wallet history for ${playerid}, error: ${err}`)
+            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details." })
+        })
+
+        await Analytics.create({
+            owner: playerid,
+            type: type,
+            amount: -wallet.amount,
+            from: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID),
+         })
+         .then(data => data)
+         .catch(err => {
+            console.log(`There's a problem encountered while creating ${playerid} wallet history. Error: ${err}`)
+            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details." })
+         })
+    }
      
      // add the new amount to the history
      await Wallethistory.create({
-         owner: wallet.owner,
-         type: wallettype,
+         owner: playerid,
+         type: newwallettype,
          amount: parseFloat(amount),
          from: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID),
         })
@@ -100,29 +139,12 @@ exports.edituserwalletforadmin = async (req, res) => {
             console.log(`There's a problem encountered while creating ${playerid} wallet history. Error: ${err}`)
             return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details." })
         })
-        
-        const totalAnalytics = await Analytics.aggregate([
-            { $match: { owner: new mongoose.Types.ObjectId(ownerId), type: wallettype } },
-            { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-        ]);
     
-        // negate the previous total amount
-        await Analytics.create({
-            owner: wallet.owner,
-            type: wallettype,
-            amount: -totalAnalytics[0].totalAmount,
-            from: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID),
-         })
-         .then(data => data)
-         .catch(err => {
-            console.log(`There's a problem encountered while creating ${playerid} wallet history. Error: ${err}`)
-            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details." })
-         })
 
          // add the new amount to the analytics
          await Analytics.create({
-            owner: wallet.owner,
-            type: wallettype,
+            owner: playerid,
+            type: type,
             amount: parseFloat(amount),
             from: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID),
          })
