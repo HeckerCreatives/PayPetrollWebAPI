@@ -577,6 +577,52 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
             return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details."})
         })
 
+        if (history.type === "unilevelbalance" || history.type === "directbalance") {
+
+            const commisionwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: type })
+                .then((data) => data)
+                .catch((err) => {
+                    console.log(`There's a problem getting leaderboard data ${err}`);
+                    return res.status(400).json({
+                        message: "bad-request",
+                        data: "There's a problem with the server! Please contact customer support for more details."
+                    });
+                });
+        
+            const unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "unilevelbalance" })
+                .then((data) => data)
+                .catch((err) => {
+                    console.log(`There's a problem getting unilevel wallet data ${err}`);
+                    return res.status(400).json({
+                        message: "bad-request",
+                        data: "There's a problem with the server! Please contact customer support for more details."
+                    });
+                });
+        
+            const directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "directbalance" })
+                .then((data) => data)
+                .catch((err) => {
+                    console.log(`There's a problem getting direct wallet data ${err}`);
+                    return res.status(400).json({
+                        message: "bad-request", 
+                        data: "There's a problem with the server! Please contact customer support for more details."
+                    });
+                });
+    
+            const newamount = unilevelwallet.amount + directwallet.amount
+    
+            commisionwallet.amount = newamount
+            await commisionwallet.save()
+                .then((data) => data)
+                .catch((err) => {
+                    console.log(`There's a problem updating commission wallet ${err}`);
+                    return res.status(400).json({
+                        message: "bad-request",
+                        data: "There's a problem with the server! Please contact customer support for more details."
+                    });
+                });
+            }
+
 
         return res.status(200).json({ message: "success" });
     } catch (err) {
