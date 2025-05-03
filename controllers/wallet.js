@@ -175,7 +175,7 @@ exports.edituserwalletforadmin = async (req, res) => {
 
     if (wallettype === "unilevelbalance" || wallettype === "directbalance") {
 
-        const commisionwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: type })
+        const commisionwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "commissionbalance" })
             .then((data) => data)
             .catch((err) => {
                 console.log(`There's a problem getting leaderboard data ${err}`);
@@ -206,6 +206,7 @@ exports.edituserwalletforadmin = async (req, res) => {
             });
 
         const newamount = unilevelwallet.amount + directwallet.amount
+        console.log(unilevelwallet.amount, directwallet.amount, newamount)
 
         commisionwallet.amount = newamount
         await commisionwallet.save()
