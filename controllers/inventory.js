@@ -231,12 +231,12 @@ exports.claimtotalincome = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem getting the finishing Trainer data! Please contact customer support"})
     })
 
-    const wallethistory = await addwallethistory(id, "gamebalance", trainerdb.totalaccumulated, process.env.PAYPETROLLS_ID, trainer.petname, trainer.rank)
+    const wallethistory = await addwallethistory(id, "gamebalance", trainerdb.totalaccumulated, process.env.PAYPETROLLS_ID, trainer.name, trainer.rank)
 
     if (wallethistory.message != "success"){
         return res.status(400).json({message: "bad-request", data: "There's a problem processing your data. Please contact customer support"})
     }
-    await saveinventoryhistory(id, `${trainer.petname}`, trainer.rank, `Claim ${trainer.petname}`, trainerdb.totalaccumulated)
+    await saveinventoryhistory(id, `${trainer.name}`, trainer.rank, `Claim ${trainer.petname}`, trainerdb.totalaccumulated)
 
     await addanalytics(id, wallethistory.data.transactionid, `gamebalance`, `Player ${username} claim ${trainerdb.totalaccumulated} in Trainer ${trainerdb.type}`, trainerdb.totalaccumulated)
 
