@@ -57,7 +57,7 @@ exports.getplayerwalletforadmin = async (req, res) => {
 
 
 exports.edituserwalletforadmin = async (req, res) => {
-    const { id, username } = req.user
+    // const { id, username } = req.user
 
     const { playerid, wallettype, amount } = req.body
 
@@ -175,7 +175,7 @@ exports.edituserwalletforadmin = async (req, res) => {
 
     if (wallettype === "unilevelbalance" || wallettype === "directbalance") {
 
-        const commisionwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "commissionbalance" })
+        const commisionwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(playerid), type: "commissionbalance" })
             .then((data) => data)
             .catch((err) => {
                 console.log(`There's a problem getting leaderboard data ${err}`);
@@ -185,7 +185,7 @@ exports.edituserwalletforadmin = async (req, res) => {
                 });
             });
     
-        const unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "unilevelbalance" })
+        const unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(playerid), type: "unilevelbalance" })
             .then((data) => data)
             .catch((err) => {
                 console.log(`There's a problem getting unilevel wallet data ${err}`);
@@ -195,7 +195,7 @@ exports.edituserwalletforadmin = async (req, res) => {
                 });
             });
     
-        const directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "directbalance" })
+        const directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(playerid), type: "directbalance" })
             .then((data) => data)
             .catch((err) => {
                 console.log(`There's a problem getting direct wallet data ${err}`);
