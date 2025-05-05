@@ -26,12 +26,14 @@ exports.requestpayout = async (req, res) => {
     }
 
 
-    const maintenances = await Maintenance.findOne({ type: "payout" }).then((data) => data);
+    const maintenance = await checkmaintenance("payout")
+    if (maintenance == "maintenance"){
+        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from the 8th and 22nd day of the month." })
+    }
 
-     if (maintenances.value == "1") {
-         return res.status(400).json({ message: "failed", data: "Request payout is only available during friday." });
-     }
-
+    else if (maintenance != "success"){
+        return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
+    }
     const exist = await Payout.find({
         owner: new mongoose.Types.ObjectId(id),
         type: type,
@@ -76,7 +78,7 @@ exports.requestpayout = async (req, res) => {
         });
     let totalBalance = 0
 
-    if(type == "commissionwallet"){
+    if(type == "commissionbalance"){
      totalBalance = unilevelwallet.amount + directwallet.amount;
     } else if (type == "gamebalance"){
         totalBalance = wallet.amount
@@ -91,7 +93,7 @@ exports.requestpayout = async (req, res) => {
 
     const balanceleft = totalBalance - payoutvalue
 
-    if (type == "commissionwallet") {
+    if (type == "commissionbalance") {
     await Userwallets.findOneAndUpdate(
         { owner: new mongoose.Types.ObjectId(id), type: type },
         { $set: { amount: balanceleft } }
