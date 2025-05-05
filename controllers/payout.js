@@ -49,32 +49,33 @@ exports.requestpayout = async (req, res) => {
 
     try {
         const wallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: type }).session(session);
-        let unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "unilevelbalance" }).session(session);
-        let directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "directbalance" }).session(session);
+        let totalBalance = 0;
 
-        if (!unilevelwallet) {
+        if (type === "commissionbalance") {
+            let unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "unilevelbalance" }).session(session);
+            let directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "directbalance" }).session(session);
+
+            if (!unilevelwallet) {
             unilevelwallet = await Userwallets.create([{
             owner: new mongoose.Types.ObjectId(id),
             type: "unilevelbalance",
             amount: 0
             }], { session });
             unilevelwallet = unilevelwallet[0];
-        }
+            }
 
-        if (!directwallet) {
+            if (!directwallet) {
             directwallet = await Userwallets.create([{
             owner: new mongoose.Types.ObjectId(id),
             type: "directbalance", 
             amount: 0
             }], { session });
             directwallet = directwallet[0];
-        }
+            }
 
+            let newbalance = unilevelwallet.amount + directwallet.amount;
 
-        let totalBalance = 0;
-        let newbalance = unilevelwallet.amount + directwallet.amount;
-
-        if(newbalance !== wallet.amount){
+            if(newbalance !== wallet.amount){
             let newunilevelbalance = wallet.amount * 0.2;
             let newdirectbalance = wallet.amount * 0.8;
 
@@ -85,6 +86,7 @@ exports.requestpayout = async (req, res) => {
             await directwallet.save({session});
 
             console.log(`Direct Balance And Unilevel Balance Recalculated for user ${username}`)
+            }
         }
 
         if(type == "commissionbalance"){
@@ -628,6 +630,7 @@ exports.processpayout = async (req, res) => {
 
         if (wallettype == "commissionbalance"){
 
+            console.log("passing here")
             
             await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(playerid), type: "directbalance"}, {$inc: {amount: payoutvalue}})
             .catch(err => {
