@@ -780,6 +780,7 @@ exports.getrequesthistoryplayersuperadmin = async (req, res) => {
         const {owner, processby, status, value, type, createdAt} = valuedata
 
         data.history.push({
+            id: valuedata._id,
             date: createdAt,
             grossamount: type === 'gamebalance' ? value : value,
             withdrawalfee: type === 'gamebalance' ? value * 0.10 : 0,
