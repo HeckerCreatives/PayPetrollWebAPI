@@ -597,6 +597,13 @@ exports.deleteplayerinventorysuperadmin = async (req, res) => {
             return res.status(400).json({message: "bad-request", data: "There's a problem getting the trainer data! Please contact customer support"})
         })
 
+        // we should also find the inventory history and delete it we can find it through the createdAt date and the trainer name
+        await Inventoryhistory.findOneAndDelete({ 
+            owner: new mongoose.Types.ObjectId(playerid), 
+            createdAt: bank.createdAt, // Match the exact createdAt timestamp
+            trainername: bank.trainername 
+        });
+
         return res.status(200).json({ message: "success"});
 
     } catch (error) {
