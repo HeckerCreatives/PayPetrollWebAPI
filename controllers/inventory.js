@@ -592,8 +592,8 @@ exports.deleteplayerinventorysuperadmin = async (req, res) => {
         const inventoryhistory = await Inventoryhistory.findOne({ 
             owner: new mongoose.Types.ObjectId(bank.owner),
             createdAt: {
-            $gte: new Date(bank.createdAt.getTime() - 3000), // 3 seconds before
-            $lte: new Date(bank.createdAt.getTime() + 3000)  // 3 seconds after
+            $gte: new Date(bank.createdAt.getTime() - 10000), // 3 seconds before
+            $lte: new Date(bank.createdAt.getTime() + 10000)  // 3 seconds after
             },
             trainername: bank.petname 
         }).catch(err => {
@@ -617,8 +617,8 @@ exports.deleteplayerinventorysuperadmin = async (req, res) => {
         await Inventoryhistory.findOneAndDelete({ 
             owner: new mongoose.Types.ObjectId(bank.owner),
             createdAt: {
-            $gte: new Date(bank.createdAt.getTime() - 3000), // 3 seconds before
-            $lte: new Date(bank.createdAt.getTime() + 3000)  // 3 seconds after
+            $gte: new Date(bank.createdAt.getTime() - 10000), // 3 seconds before
+            $lte: new Date(bank.createdAt.getTime() + 10000)  // 3 seconds after
             },
             trainername: bank.petname 
         }).catch(err => {
