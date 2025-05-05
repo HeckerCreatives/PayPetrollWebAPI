@@ -49,11 +49,11 @@ exports.requestpayout = async (req, res) => {
 
     try {
         const wallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: type }).session(session);
+        let unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "unilevelbalance" }).session(session);
+        let directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "directbalance" }).session(session);
         let totalBalance = 0;
 
         if (type === "commissionbalance") {
-            let unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "unilevelbalance" }).session(session);
-            let directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "directbalance" }).session(session);
 
             if (!unilevelwallet) {
             unilevelwallet = await Userwallets.create([{
