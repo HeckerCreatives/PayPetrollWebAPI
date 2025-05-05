@@ -537,8 +537,6 @@ exports.initialize = async () => {
                 const walletDocs = [
                     { owner: user._id, type: "directbalance", amount: directbalance },
                     { owner: user._id, type: "unilevelbalance", amount: unilevelbalance },
-                    { owner: user._id, type: "commissionbalance", amount: totalAmount },
-
                 ];
 
                 await Userwallets.insertMany(walletDocs)
@@ -552,9 +550,6 @@ exports.initialize = async () => {
         }
     }
 
-    for (const user of allUsers) {
-        
-    }
 
 
     const wallets = ["fiatbalance", "gamebalance", "commissionbalance", "directbalance", "unilevelbalance"]
