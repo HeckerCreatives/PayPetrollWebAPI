@@ -341,6 +341,9 @@ exports.getplayerwallethistoryforadmin = async (req, res) => {
                 }
             },
             {
+                $sort: { "createdAt": -1 }
+            },
+            {
                 $skip: pageOptions.page * pageOptions.limit
             },
             {
