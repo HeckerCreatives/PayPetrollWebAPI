@@ -73,7 +73,6 @@ exports.buytrainer = async (req, res) => {
             });
         }
 
-        console.log(amountleft, amountToBuy)
     }
     
     
@@ -442,7 +441,6 @@ exports.getplayerinventoryforadmin = async (req, res) => {
 
         const data = await Promise.all(trainer.map(async (trainers) => {
             const { _id, type, rank, duration, dailyaccumulated, totalaccumulated, qty, price, startdate } = trainers;
-            console.log(trainers, price, totalaccumulated, dailyaccumulated, startdate, rank, type)
             const trainerz = await Trainer.findOne({ name: type });
 
             if (!trainerz) {
@@ -589,6 +587,24 @@ exports.deleteplayerinventorysuperadmin = async (req, res) => {
             return res.status(400).json({ message: 'failed', data: `There's a problem with the server! Please contact customer support.` });
         }
 
+
+        // we should also find the inventory history and delete it we can find it through the createdAt date and the trainer name
+        const inventoryhistory = await Inventoryhistory.findOne({ 
+            owner: new mongoose.Types.ObjectId(bank.owner),
+            createdAt: {
+            $gte: new Date(bank.createdAt.getTime() - 3000), // 3 seconds before
+            $lte: new Date(bank.createdAt.getTime() + 3000)  // 3 seconds after
+            },
+            trainername: bank.petname 
+        }).catch(err => {
+            return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+        })
+
+        if (!inventoryhistory) {
+            return res.status(400).json({ message: 'failed', data: `There's a problem with the server! Please contact customer support.` });
+        }
+
+
         await Inventory.findOneAndDelete({ _id: new mongoose.Types.ObjectId(petid) })
         .then(data => data)
         .catch(err => {
@@ -599,10 +615,16 @@ exports.deleteplayerinventorysuperadmin = async (req, res) => {
 
         // we should also find the inventory history and delete it we can find it through the createdAt date and the trainer name
         await Inventoryhistory.findOneAndDelete({ 
-            owner: new mongoose.Types.ObjectId(playerid), 
-            createdAt: bank.createdAt, // Match the exact createdAt timestamp
-            trainername: bank.trainername 
-        });
+            owner: new mongoose.Types.ObjectId(bank.owner),
+            createdAt: {
+            $gte: new Date(bank.createdAt.getTime() - 3000), // 3 seconds before
+            $lte: new Date(bank.createdAt.getTime() + 3000)  // 3 seconds after
+            },
+            trainername: bank.petname 
+        }).catch(err => {
+            console.log(`Failed to delete inventory history for ${username}, error: ${err}`)
+            return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+        })
 
         return res.status(200).json({ message: "success"});
 

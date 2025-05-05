@@ -538,8 +538,6 @@ exports.initialize = async () => {
                     { owner: user._id, type: "directbalance", amount: directbalance },
                     { owner: user._id, type: "unilevelbalance", amount: unilevelbalance },
                     { owner: user._id, type: "commissionbalance", amount: totalAmount },
-                    { owner: user._id, type: "fiatbalance", amount: 0 },
-                    { owner: user._id, type: "gamebalance", amount: 0 },
 
                 ];
 
@@ -552,6 +550,10 @@ exports.initialize = async () => {
                 console.log(`New wallets created for user ${user.username}`)
             }
         }
+    }
+
+    for (const user of allUsers) {
+        
     }
 
 
