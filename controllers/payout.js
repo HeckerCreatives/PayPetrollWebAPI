@@ -54,38 +54,37 @@ exports.requestpayout = async (req, res) => {
         let totalBalance = 0;
 
         if (type === "commissionbalance") {
-
             if (!unilevelwallet) {
-            unilevelwallet = await Userwallets.create([{
-            owner: new mongoose.Types.ObjectId(id),
-            type: "unilevelbalance",
-            amount: 0
-            }], { session });
-            unilevelwallet = unilevelwallet[0];
+                unilevelwallet = await Userwallets.create([{
+                owner: new mongoose.Types.ObjectId(id),
+                type: "unilevelbalance",
+                amount: 0
+                }], { session });
+                unilevelwallet = unilevelwallet[0];
             }
 
             if (!directwallet) {
-            directwallet = await Userwallets.create([{
-            owner: new mongoose.Types.ObjectId(id),
-            type: "directbalance", 
-            amount: 0
-            }], { session });
-            directwallet = directwallet[0];
+                directwallet = await Userwallets.create([{
+                owner: new mongoose.Types.ObjectId(id),
+                type: "directbalance", 
+                amount: 0
+                }], { session });
+                directwallet = directwallet[0];
             }
 
             let newbalance = unilevelwallet.amount + directwallet.amount;
 
             if(newbalance !== wallet.amount){
-            let newunilevelbalance = wallet.amount * 0.2;
-            let newdirectbalance = wallet.amount * 0.8;
+                let newunilevelbalance = wallet.amount * 0.2;
+                let newdirectbalance = wallet.amount * 0.8;
 
-            unilevelwallet.amount = newunilevelbalance;
-            directwallet.amount = newdirectbalance;
+                unilevelwallet.amount = newunilevelbalance;
+                directwallet.amount = newdirectbalance;
 
-            await unilevelwallet.save({session});
-            await directwallet.save({session});
+                await unilevelwallet.save({session});
+                await directwallet.save({session});
 
-            console.log(`Direct Balance And Unilevel Balance Recalculated for user ${username}`)
+                console.log(`Direct Balance And Unilevel Balance Recalculated for user ${username}`)
             }
         }
 
@@ -99,7 +98,7 @@ exports.requestpayout = async (req, res) => {
             await session.abortTransaction();
             return res.status(400).json({
                 message: "failed",
-                data: "The amount is greater than your combined wallet balance"
+                data: "The amount is greater than your wallet balance"
             });
         }
 
