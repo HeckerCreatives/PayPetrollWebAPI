@@ -387,7 +387,7 @@ exports.getplayerwallethistoryforadmin = async (req, res) => {
 
         data.history.push({
             id: historydata._id,
-            username: username,
+            username: type == 'fiatbalance' ? 'xpsuperadmin' : username,
             type: type,
             amount: amount,
             fromusername: fromusername,
