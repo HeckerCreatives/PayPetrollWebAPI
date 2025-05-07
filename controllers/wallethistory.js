@@ -645,8 +645,7 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
             newwallettype = "commissionbalance"
         }
 
-        console.log(newwallettype)
-        console.log(history.type)
+
         // get the current wallet balance of the user
 
         const wallet = await Userwallets.findOne({ owner: history.owner, type: newwallettype });
@@ -654,11 +653,15 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
             return res.status(400).json({ message: "failed", data: "Wallet not found." });
         }
 
-        console.log(wallet)
 
         // increment or decrement the wallet balance based on the new amount
 
         const difference = parseFloat(amount) - history.amount;
+        const newwalletvalue = wallet.amount + difference;
+        
+        if (newwalletvalue < 0) {
+            return res.status(400).json({ message: "failed", data: "Wallet balance cannot be negative." });
+        }
         await Userwallets.findOneAndUpdate(
             { owner: history.owner, type: newwallettype },
             { $inc: { amount: difference } }
@@ -737,6 +740,43 @@ exports.deleteplayerwallethistoryforadmin = async (req, res) => {
         if (!history) {
             return res.status(400).json({ message: "failed", data: "Wallet history not found." });
         }
+
+        let newwallettype 
+
+        if (history.type === "fiatbalance") {
+            newwallettype = "fiatbalance"
+        } else if (history.type === "gamebalance") {
+            newwallettype = "gamebalance"
+        } else {
+            newwallettype = "commissionbalance"
+        }
+
+
+        // get the current wallet balance of the user
+
+        const wallet = await Userwallets.findOne({ owner: history.owner, type: newwallettype });
+        if (!wallet) {
+            return res.status(400).json({ message: "failed", data: "Wallet not found." });
+        }
+
+
+        // increment or decrement the wallet balance based on the new amount
+
+        const difference = parseFloat(amount) - history.amount;
+        const newwalletvalue = wallet.amount + difference;
+        
+        if (newwalletvalue < 0) {
+            return res.status(400).json({ message: "failed", data: "Wallet balance cannot be negative." });
+        }
+        await Userwallets.findOneAndUpdate(
+            { owner: history.owner, type: newwallettype },
+            { $inc: { amount: difference } }
+        )
+        .then(data => data)
+        .catch(err => {
+            console.log(`There's a problem encountered while deleting ${historyid} wallet history. Error: ${err}`)
+            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details."})
+        })
 
 
         // delete the wallet history entry
