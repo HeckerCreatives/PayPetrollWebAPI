@@ -8,159 +8,71 @@ const Conversionrate = require("../models/Conversionrate")
 const StaffUserwallets = require("../models/Staffuserwallets")
 
 exports.requestpayout = async (req, res) => {
-    const { id, username } = req.user;
-    const { type, payoutvalue, paymentmethod, accountname, accountnumber } = req.body;
-
-    if (paymentmethod.toLowerCase() === "gcash" && payoutvalue > 5000) {
-        return res.status(400).json({ message: "failed", data: "Gcash pay out maximum value is ₱5000." });
-    }
-
-    if (paymentmethod.toLowerCase() === "gotyme" && payoutvalue < 0) {
-        return res.status(400).json({ message: "failed", data: "GoTyme pay out minimum value is ₱0." });
-    }
-
-    if (paymentmethod.toLowerCase() === "cimb" && payoutvalue > 5000) {
-        return res.status(400).json({ message: "failed", data: "CIMB pay out maximum value is ₱5000." });
-    }
+    const {id, username} = req.user
+    const {type, payoutvalue, paymentmethod, accountname, accountnumber} = req.body
 
     const maintenance = await checkmaintenance("payout")
+
     if (maintenance == "maintenance"){
-        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available on monday." })
+        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from 12:00pm - 11:59pm Monday PST." })
     }
+
     else if (maintenance != "success"){
         return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
     }
 
-    const exist = await Payout.find({
-        owner: new mongoose.Types.ObjectId(id),
-        type: type,
-        status: "processing"
-    });
+    const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
+    .then(data => data)
 
-    if (exist.length > 0) {
-        return res.status(400).json({
-            message: "failed",
-            data: "There's an existing request! Please wait for it to be processed before requesting another payout."
-        });
+    if (exist.length > 0){
+        return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-        const wallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: type }).session(session);
-        let unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "unilevelbalance" }).session(session);
-        let directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(id), type: "directbalance" }).session(session);
-        let totalBalance = 0;
-
-        if (type === "commissionbalance") {
-            if (!unilevelwallet) {
-                unilevelwallet = await Userwallets.create([{
-                owner: new mongoose.Types.ObjectId(id),
-                type: "unilevelbalance",
-                amount: 0
-                }], { session });
-                unilevelwallet = unilevelwallet[0];
-            }
-
-            if (!directwallet) {
-                directwallet = await Userwallets.create([{
-                owner: new mongoose.Types.ObjectId(id),
-                type: "directbalance", 
-                amount: 0
-                }], { session });
-                directwallet = directwallet[0];
-            }
-
-            let newbalance = unilevelwallet.amount + directwallet.amount;
-
-            if(newbalance !== wallet.amount){
-                let newunilevelbalance = wallet.amount * 0.2;
-                let newdirectbalance = wallet.amount * 0.8;
-
-                unilevelwallet.amount = newunilevelbalance;
-                directwallet.amount = newdirectbalance;
-
-                await unilevelwallet.save({session});
-                await directwallet.save({session});
-
-                console.log(`Direct Balance And Unilevel Balance Recalculated for user ${username}`)
-            }
+    if (paymentmethod == 'gotyme'){
+        if (payoutvalue < 500 || payoutvalue > 500001){
+            return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 500000." })
         }
-
-        if(type == "commissionbalance"){
-            totalBalance = unilevelwallet.amount + directwallet.amount;
-        } else if (type == "gamebalance"){
-            totalBalance = wallet.amount;
-        }
-
-        if (payoutvalue > totalBalance) {
-            await session.abortTransaction();
-            return res.status(400).json({
-                message: "failed",
-                data: "The amount is greater than your wallet balance"
-            });
-        }
-
-        const balanceleft = totalBalance - payoutvalue;
-
-        if (type == "commissionbalance") {
-            await Userwallets.findOneAndUpdate(
-                { owner: new mongoose.Types.ObjectId(id), type: type },
-                { $set: { amount: balanceleft } },
-                { session }
-            );
-            
-            if (payoutvalue > directwallet.amount) {
-                const deductamount = payoutvalue - directwallet.amount;
-                directwallet.amount = 0;
-                unilevelwallet.amount = unilevelwallet.amount - deductamount;
-                
-                await unilevelwallet.save({session});
-                await directwallet.save({session});
-            } else {
-                const deductamount = directwallet.amount - payoutvalue;
-                directwallet.amount = deductamount;
-                await directwallet.save({session});
-            }
-        } else if (type == "gamebalance") {
-            await Userwallets.findOneAndUpdate(
-                { owner: new mongoose.Types.ObjectId(id), type: type },
-                { $inc: { amount: -payoutvalue } },
-                { session }
-            );
-        } else {
-            await session.abortTransaction();
-            return res.status(400).json({
-                message: "failed",
-                data: "Invalid wallet type."
-            });
-        }
-
-        await Payout.create([{
-            owner: new mongoose.Types.ObjectId(id),
-            status: "processing", 
-            value: payoutvalue,
-            type: type,
-            paymentmethod: paymentmethod,
-            accountname: accountname,
-            accountnumber: accountnumber
-        }], { session });
-
-        await session.commitTransaction();
-        return res.json({ message: "success" });
-
-    } catch (error) {
-        await session.abortTransaction();
-        console.log(`Error in requestpayout: ${error}`);
-        return res.status(400).json({
-            message: "bad-request",
-            data: "There's a problem with the server! Please contact customer support for more details."
-        });
-    } finally {
-        session.endSession();
     }
-};
+
+    if(paymentmethod == 'gcash' ){
+        if (payoutvalue < 500 || payoutvalue > 5000){
+        return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 5000" })
+        }
+    }
+    const wallet = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(id), type: type})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting leaderboard data ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+
+    if (payoutvalue > wallet.amount){
+        return res.status(400).json({ message: "failed", data: "The amount is greater than your wallet balance" })
+    }
+
+    await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id), type: type}, {$inc: {amount: -payoutvalue}})
+    .catch(err => {
+        console.log(`There's a problem deducting payout value for ${username} with value ${payoutvalue}. Error: ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+    await Payout.create({owner: new mongoose.Types.ObjectId(id), status: "processing", value: payoutvalue, type: type, paymentmethod: paymentmethod, accountname: accountname, accountnumber: accountnumber})
+    .catch(async err => {
+
+        await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id), type: type}, {$inc: {amount: payoutvalue}})
+        .catch(err => {
+            console.log(`There's a problem getting leaderboard data ${err}`)
+            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+        })
+
+        console.log(`There's a problem getting leaderboard data ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+    return res.json({message: "success"})
+}
+
 exports.getrequesthistoryplayer = async (req, res) => {
     const {id, username} = req.user
     const {type, page, limit} = req.query
@@ -626,19 +538,6 @@ exports.processpayout = async (req, res) => {
     
             return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
         })
-
-        if (wallettype == "commissionbalance"){
-
-            console.log("passing here")
-            
-            await Userwallets.findOneAndUpdate({owner: new mongoose.Types.ObjectId(playerid), type: "directbalance"}, {$inc: {amount: payoutvalue}})
-            .catch(err => {
-                
-                console.log(`Failed to process Payout data for ${username}, player: ${playerid}, payinid: ${payinid} error: ${err}`)
-                
-                return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-            })
-        }
     }
     else{
 
