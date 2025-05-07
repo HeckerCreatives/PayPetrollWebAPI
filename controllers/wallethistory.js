@@ -753,28 +753,24 @@ exports.deleteplayerwallethistoryforadmin = async (req, res) => {
 
 
         // get the current wallet balance of the user
-
         const wallet = await Userwallets.findOne({ owner: history.owner, type: newwallettype });
         if (!wallet) {
             return res.status(400).json({ message: "failed", data: "Wallet not found." });
         }
 
+        // When deleting a history entry, we need to subtract the history amount from the wallet
+        const newWalletBalance = wallet.amount - history.amount;
 
-        // increment or decrement the wallet balance based on the new amount
-
-        const difference = parseFloat(amount) - history.amount;
-        const newwalletvalue = wallet.amount + difference;
-        
-        if (newwalletvalue < 0) {
-            return res.status(400).json({ message: "failed", data: "Wallet balance cannot be negative." });
+        if (newWalletBalance < 0) {
+            return res.status(400).json({ message: "failed", data: "Wallet balance cannot be negative after deletion." });
         }
+
         await Userwallets.findOneAndUpdate(
             { owner: history.owner, type: newwallettype },
-            { $inc: { amount: difference } }
+            { $set: { amount: newWalletBalance } }
         )
-        .then(data => data)
         .catch(err => {
-            console.log(`There's a problem encountered while deleting ${historyid} wallet history. Error: ${err}`)
+            console.log(`There's a problem encountered while updating wallet for history deletion ${historyid}. Error: ${err}`)
             return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details."})
         })
 
