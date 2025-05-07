@@ -556,9 +556,8 @@ exports.gettopcommissions = async (req, res) => {
           $unwind: "$user"
         },
         {
-            // Filter out users where username is 'creaturesmash'
             $match: {
-              "user.username": { $ne: "creaturesmash" }
+              "user.username": { $ne: "xpgod" }
             }
         },
         {
@@ -636,9 +635,6 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
             return res.status(400).json({ message: "failed", data: "Wallet history not found." });
         }
 
-        history.amount = parseFloat(amount);
-        await history.save();
-
         let newwallettype 
 
         if (history.type === "fiatbalance") {
@@ -649,6 +645,8 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
             newwallettype = "commissionbalance"
         }
 
+        console.log(newwallettype)
+        console.log(history.type)
         // get the current wallet balance of the user
 
         const wallet = await Userwallets.findOne({ owner: history.owner, type: newwallettype });
@@ -670,6 +668,9 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
             console.log(`There's a problem encountered while updating ${historyid} wallet history. Error: ${err}`)
             return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details."})
         })
+
+        history.amount = parseFloat(amount);
+        await history.save();
 
 
         return res.status(200).json({ message: "success" });
