@@ -3,6 +3,7 @@ const Wallethistory = require("../models/Wallethistory")
 const Userwallets = require("../models/Userwallets")
 const Payout = require("../models/Payout")
 const Users = require("../models/Users")
+const Analytics = require("../models/Analytics")
 
 exports.playerwallethistory = async (req, res) => {
     const {id, username} = req.user
@@ -783,6 +784,14 @@ exports.deleteplayerwallethistoryforadmin = async (req, res) => {
             return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details."})
         })
 
+        // delete the analytics entry
+
+        await Analytics.findOneAndDelete({ transactionid: historyid })
+        .then(data => data)
+        .catch(err => {
+            console.log(`There's a problem encountered while deleting ${historyid} analytics. Error: ${err}`)
+            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details."})
+        })
 
         // delete the wallet history entry
 
