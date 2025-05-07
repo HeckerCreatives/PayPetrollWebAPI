@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose")
 const Wallethistory = require("../models/Wallethistory")
 const Userwallets = require("../models/Userwallets")
 const Payout = require("../models/Payout")
+const Users = require("../models/Users")
 
 exports.playerwallethistory = async (req, res) => {
     const {id, username} = req.user
@@ -684,7 +685,7 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
 };
 exports.createplayerwallethistoryforadmin = async (req, res) => {
     const { id, username } = req.user;
-    const { playerid, type, amount } = req.body;
+    const { playerid, type, amount, user } = req.body;
 
     if (!playerid || !type) {
         return res.status(400).json({ message: "failed", data: "Incomplete form data." });
@@ -695,11 +696,19 @@ exports.createplayerwallethistoryforadmin = async (req, res) => {
     }
 
     try {
+
+
+        const userfrom = await Users.findOne({ username: { $regex: new RegExp('^' + user + '$', 'i') } })
+
+        if (!userfrom) {
+            return res.status(400).json({ message: "failed", data: "User not found." });
+        }
+
         const walletHistory = new Wallethistory({
             owner: new mongoose.Types.ObjectId(playerid),
             type: type,
             amount: parseFloat(amount),
-            from: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID)
+            from: new mongoose.Types.ObjectId(userfrom._id),
         });
 
         await walletHistory.save();
