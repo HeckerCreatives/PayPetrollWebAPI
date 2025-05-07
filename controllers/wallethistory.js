@@ -536,7 +536,7 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
     const { id, username } = req.user;
     const { historyid, amount } = req.body;
 
-    if (!historyid || !amount) {
+    if (!historyid) {
         return res.status(400).json({ message: "failed", data: "Incomplete form data." });
     }
 
@@ -563,7 +563,7 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
         } else if (history.type === "unilevelbalance") {
             newwallettype = "commissionbalance"
         } else if (history.type === "directbalance") {
-            newwallettype = "directreferralbalance"
+            newwallettype = "commissionbalance"
         }
 
         // get the current wallet balance of the user
@@ -577,7 +577,7 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
 
         const difference = parseFloat(amount) - history.amount;
         await Userwallets.findOneAndUpdate(
-            { owner: history.owner, type: history.type },
+            { owner: history.owner, type: newwallettype },
             { $inc: { amount: difference } }
         )
         .then(data => data)
@@ -586,52 +586,6 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
             return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact customer support for more details."})
         })
 
-        if (history.type === "unilevelbalance" || history.type === "directbalance") {
-
-            const commisionwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(history.owner), type: type })
-                .then((data) => data)
-                .catch((err) => {
-                    console.log(`There's a problem getting leaderboard data ${err}`);
-                    return res.status(400).json({
-                        message: "bad-request",
-                        data: "There's a problem with the server! Please contact customer support for more details."
-                    });
-                });
-        
-            const unilevelwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(history.owner), type: "unilevelbalance" })
-                .then((data) => data)
-                .catch((err) => {
-                    console.log(`There's a problem getting unilevel wallet data ${err}`);
-                    return res.status(400).json({
-                        message: "bad-request",
-                        data: "There's a problem with the server! Please contact customer support for more details."
-                    });
-                });
-        
-            const directwallet = await Userwallets.findOne({ owner: new mongoose.Types.ObjectId(history.owner), type: "directbalance" })
-                .then((data) => data)
-                .catch((err) => {
-                    console.log(`There's a problem getting direct wallet data ${err}`);
-                    return res.status(400).json({
-                        message: "bad-request", 
-                        data: "There's a problem with the server! Please contact customer support for more details."
-                    });
-                });
-    
-            const newamount = unilevelwallet.amount + directwallet.amount
-    
-            commisionwallet.amount = newamount
-            await commisionwallet.save()
-                .then((data) => data)
-                .catch((err) => {
-                    console.log(`There's a problem updating commission wallet ${err}`);
-                    return res.status(400).json({
-                        message: "bad-request",
-                        data: "There's a problem with the server! Please contact customer support for more details."
-                    });
-                });
-            }
-
 
         return res.status(200).json({ message: "success" });
     } catch (err) {
@@ -639,7 +593,49 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
         return res.status(500).json({ message: "failed", data: "An error occurred while editing the wallet history." });
     }
 };
+exports.createplayerwallethistoryforadmin = async (req, res) => {
+    const { id, username } = req.user;
+    const { playerid, type, amount, from } = req.body;
 
+    if (!playerid || !type || !from) {
+        return res.status(400).json({ message: "failed", data: "Incomplete form data." });
+    }
+
+    if (parseFloat(amount) < 0) {
+        return res.status(400).json({ message: "failed", data: "Amount cannot be negative." });
+    }
+
+    try {
+        const walletHistory = new Wallethistory({
+            owner: new mongoose.Types.ObjectId(playerid),
+            type: type,
+            amount: parseFloat(amount),
+            from: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID)
+        });
+
+        await walletHistory.save();
+
+        let newwallettype = type;
+        if (type === "unilevelbalance" || type === "directbalance") {
+            newwallettype = "commissionbalance";
+        }
+
+        await Userwallets.findOneAndUpdate(
+            { owner: playerid, type: newwallettype },
+            { $inc: { amount: parseFloat(amount) } },
+            { new: true }
+        )
+        .catch(err => {
+            console.log(`Failed to update wallet for player ${playerid}, Error: ${err}`);
+            return res.status(400).json({ message: "bad-request", data: "Failed to update wallet balance." });
+        });
+
+        return res.status(200).json({ message: "success" });
+    } catch (err) {
+        console.log(`Failed to create wallet history for ${username}, player: ${playerid}, Error: ${err}`);
+        return res.status(500).json({ message: "failed", data: "An error occurred while creating the wallet history." });
+    }
+};
 
 exports.deleteplayerwallethistoryforadmin = async (req, res) => {
     const { id, username } = req.user;

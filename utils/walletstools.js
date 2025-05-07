@@ -243,7 +243,7 @@ exports.sendcommissionunilevel = async (commissionAmount, id, trainername, train
 
     const bulkOperationUnilvl = unilevelresult.map(({_id, amount }) => ({
         updateOne: {
-            filter: { owner: new mongoose.Types.ObjectId(_id), type: 'commisionbalance' },
+            filter: { owner: new mongoose.Types.ObjectId(_id), type: 'commissionbalance' },
             update: { $inc: { amount: amount}}
         }
     }))
