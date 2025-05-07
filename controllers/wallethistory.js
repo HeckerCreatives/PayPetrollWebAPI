@@ -560,9 +560,7 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
             newwallettype = "fiatbalance"
         } else if (history.type === "gamebalance") {
             newwallettype = "gamebalance"
-        } else if (history.type === "commissionbalance") {
-            newwallettype = "commissionbalance"
-        } else if (history.type === "directreferralbalance") {
+        } else {
             newwallettype = "commissionbalance"
         }
 
