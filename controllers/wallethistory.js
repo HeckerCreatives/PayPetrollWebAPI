@@ -595,9 +595,9 @@ exports.editplayerwallethistoryforadmin = async (req, res) => {
 };
 exports.createplayerwallethistoryforadmin = async (req, res) => {
     const { id, username } = req.user;
-    const { playerid, type, amount, from } = req.body;
+    const { playerid, type, amount } = req.body;
 
-    if (!playerid || !type || !from) {
+    if (!playerid || !type) {
         return res.status(400).json({ message: "failed", data: "Incomplete form data." });
     }
 
