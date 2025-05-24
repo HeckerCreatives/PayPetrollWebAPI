@@ -23,7 +23,7 @@ exports.initialize = async () => {
     })
 
     if (!csadmin){
-        const player = await Users.create({_id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "xpgod", password: "LAksaODA01asIAS".toLocaleLowerCase(), gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
+        const player = await Users.create({_id: new mongoose.Types.ObjectId(process.env.PAYPETROLLS_ID), username: "xpgod", password: "LAksaODA01asIAS", gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
         
         
         await Userdetails.create({owner: new mongoose.Types.ObjectId(player._id), phonenumber: "", fistname: "", lastname: "", address: "", city: "", country: "", postalcode: "", profilepicture: ""})
@@ -65,7 +65,7 @@ exports.initialize = async () => {
     })
 
     if(adminz.length <= 0 ){
-        await StaffUser.create({ username: "xpadmin", password: "LAksaODA01asIAS".toLocaleLowerCase(), webtoken: "", status: "active", auth: "admin"})
+        await StaffUser.create({ username: "xpadmin", password: "LAksaODA01asIAS", webtoken: "", status: "active", auth: "admin"})
         .catch(err => {
             console.log(`Error saving admin data: ${err}`)
             return
@@ -240,7 +240,7 @@ exports.initialize = async () => {
             profit: 3,
             duration: 15,
             animal: "Bird",
-            rank: "Ace"
+            rank: "Elite"
             },
             {
             name: "Ash",
@@ -249,7 +249,7 @@ exports.initialize = async () => {
             profit: 3,
             duration: 15,
             animal: "Cat",
-            rank: "Ace"
+            rank: "Elite"
             },
             {
             name: "Rex",
@@ -258,7 +258,7 @@ exports.initialize = async () => {
             profit: 3,
             duration: 15,
             animal: "Dog",
-            rank: "Ace"
+            rank: "Elite"
             },
             {
             name: "Tank",
@@ -267,7 +267,7 @@ exports.initialize = async () => {
             profit: 3,
             duration: 15,
             animal: "Fish",
-            rank: "Ace"
+            rank: "Elite"
             },
             {
             name: "Sugar",
@@ -276,7 +276,7 @@ exports.initialize = async () => {
             profit: 3,
             duration: 15,
             animal: "Hamster",
-            rank: "Ace"
+            rank: "Elite"
             },
             // // Ace of Spade
             // {
@@ -492,76 +492,84 @@ exports.initialize = async () => {
     }
 
 
-    const newwallets = ["directbalance", "unilevelbalance"]
+    // const newwallets = ["directbalance", "unilevelbalance"]
  
-    const allUsers = await Users.find()
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting all user data ${err}`)
-        return
-    })
+    // const allUsers = await Users.find()
+    // .then(data => data)
+    // .catch(err => {
+    //     console.log(`There's a problem getting all user data ${err}`)
+    //     return
+    // })
 
-    if (allUsers.length > 0){
-        for(const user of allUsers) {
-            const existingWallets = await Userwallets.find({ owner: user._id })
-                .then(data => data)
-                .catch(err => {
-                    console.log(`There's a problem getting user wallets ${err}`)
-                    return
-                });
+    // if (allUsers.length > 0){
+    //     for(const user of allUsers) {
+    //         const existingWallets = await Userwallets.find({ owner: user._id })
+    //             .then(data => data)
+    //             .catch(err => {
+    //                 console.log(`There's a problem getting user wallets ${err}`)
+    //                 return
+    //             });
 
-            const existingWalletTypes = existingWallets.map(wallet => wallet.type);
+    //         const existingWalletTypes = existingWallets.map(wallet => wallet.type);
             
-            const needsNewWallets = newwallets.filter(type => !existingWalletTypes.includes(type));
+    //         const needsNewWallets = newwallets.filter(type => !existingWalletTypes.includes(type));
 
-            if (needsNewWallets.length > 0) {
-                // Calculate balances from commission history
-                const totalHistory = await Wallethistory.aggregate([
-                    { $match: { owner: user._id, type: "commissionbalance", status: { $ne: "deleted" } } },
-                    { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-                ]);
+    //         if (needsNewWallets.length > 0) {
+    //             // Calculate balances from commission history
+    //             const totalcommision = await Wallethistory.aggregate([
+    //                 { $match: { owner: user._id, type: "commissionbalance" } },
+    //                 { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    //             ]);
 
-                const historyAmount = totalHistory.length > 0 ? totalHistory[0].totalAmount : 0;
+    //             const totaldirectreferral = await Wallethistory.aggregate([
+    //                 { $match: { owner: user._id, type: "directreferralbalance" } },
+    //                 { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    //             ]);
 
-                const totalWithdrawals = await Analytics.aggregate([
-                    { $match: { owner: user._id, type: 'payoutcommisionbalance' } },
-                    { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-                ]);
+    //            let commisionamount = totalcommision.length > 0 ? totalcommision[0].totalAmount : 0;
+    //             let historyAmount = totaldirectreferral.length > 0 ? totaldirectreferral[0].totalAmount : 0;
 
-                const withdrawalAmount = totalWithdrawals.length > 0 ? totalWithdrawals[0].totalAmount : 0;
-                const totalAmount = historyAmount - withdrawalAmount;
+    //             const totalWithdrawals = await Analytics.aggregate([
+    //                 { $match: { owner: user._id, type: 'payoutcommisionbalance' } },
+    //                 { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    //             ]);
+
+
+    
+    //             const withdrawalAmount = totalWithdrawals.length > 0 ? totalWithdrawals[0].totalAmount : 0;
+    //             const totalAmount = (commisionamount + historyAmount) - withdrawalAmount;
                 
-                const directbalance = totalAmount * 0.8;
-                const unilevelbalance = totalAmount * 0.2;
+    //             const directbalance = totalAmount * 0.8;
+    //             const unilevelbalance = totalAmount * 0.2;
 
-                const walletDocs = [
-                    { owner: user._id, type: "directbalance", amount: directbalance },
-                    { owner: user._id, type: "unilevelbalance", amount: unilevelbalance },
-                ];
+    //             const walletDocs = [
+    //                 { owner: user._id, type: "directbalance", amount: directbalance },
+    //                 { owner: user._id, type: "unilevelbalance", amount: unilevelbalance },
+    //             ];
 
-                await Userwallets.insertMany(walletDocs)
-                    .catch(err => {
-                        console.log(`There's a problem creating user wallets ${err}`)
-                        return
-                    });
+    //             await Userwallets.insertMany(walletDocs)
+    //                 .catch(err => {
+    //                     console.log(`There's a problem creating user wallets ${err}`)
+    //                     return
+    //                 });
 
-                console.log(`New wallets created for user ${user.username}`)
-            }
-        }
-    }
+    //             console.log(`New wallets created for user ${user.username}`)
+    //         }
+    //     }
+    // }
 
 
 
-    const wallets = ["fiatbalance", "gamebalance", "commissionbalance", "directbalance", "unilevelbalance"]
+    // const wallets = ["fiatbalance", "gamebalance", "commissionbalance", "directbalance", "unilevelbalance"]
 
-    // delete wallets that are not in the list
+    // // delete wallets that are not in the list
 
-    await Userwallets.deleteMany({ type: { $nin: wallets } })
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem deleting user wallets ${err}`)
-        return
-    })
+    // await Userwallets.deleteMany({ type: { $nin: wallets } })
+    // .then(data => data)
+    // .catch(err => {
+    //     console.log(`There's a problem deleting user wallets ${err}`)
+    //     return
+    // })
     
 
     console.log("SERVER DATA INITIALIZED")
