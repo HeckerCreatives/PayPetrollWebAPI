@@ -240,6 +240,12 @@ exports.claimtotalincome = async (req, res) => {
 
     await addanalytics(id, wallethistory.data.transactionid, `gamebalance`, `Player ${username} claim ${trainerdb.totalaccumulated} in Trainer ${trainerdb.type}`, trainerdb.totalaccumulated)
 
+    await Dailyclaim.deleteMany({ owner: new mongoose.Types.ObjectId(id), inventory: new mongoose.Types.ObjectId(trainerid) })
+    .catch(err => {
+        console.log(`There's a problem getting the deleting Dailyclaim data for ${username} Trainer id: ${trainerid}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the deleting Dailyclaim data! Please contact customer support"})
+    })
     return res.json({message: "success"})
 }
 
