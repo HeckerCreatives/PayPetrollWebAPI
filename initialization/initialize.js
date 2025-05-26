@@ -11,6 +11,7 @@ const Sociallinks = require("../models/Sociallinks")
 const Wallethistory = require("../models/Wallethistory")
 const Payout = require("../models/Payout")
 const Analytics = require("../models/Analytics")
+const Ingame = require("../models/Ingame")
 
 
 exports.initialize = async () => {
@@ -130,6 +131,29 @@ exports.initialize = async () => {
         })
         console.log("Maintenance initalized")
     }
+
+    const ingamelist = await Ingame.find().catch(err => {
+    console.log("There's a problem getting ingame list:", err);
+    return []; 
+});
+
+if (ingamelist.length === 0) {
+    const ingamelistdata = [
+        { type: "entrylimit", value: 0 },
+        { type: "tierentry", value: ["free", "novice", "expert", "elite"] },
+        { type: "gametimelimit", value: 0 }
+    ];
+
+    for (const data of ingamelistdata) {
+        try {
+            await Ingame.create(data);
+        } catch (err) {
+            console.log(`There's a problem creating ingame entry for ${data.type}:`, err);
+        }
+    }
+
+    console.log("Ingame initialized");
+}
 
 
     const trainer = await Trainer.find()

@@ -9,7 +9,7 @@ exports.getLeaderboard = async (req, res) => {
     await Leaderboard.find({})
         .populate('owner')
         .sort({ amount: -1 })
-        .limit(10)
+        .limit(20)
         .then(async (top10) => {
             const user = await Leaderboard.findOne({ owner: new mongoose.Types.ObjectId(id) });
 
