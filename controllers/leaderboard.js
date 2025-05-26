@@ -48,7 +48,7 @@ exports.getLeaderboardsa = async (req, res) => {
     await Leaderboard.find({})
         .populate('owner')
         .sort({ amount: -1 })
-        .limit(10)
+        .limit(20)
         .then(async (top10) => {
 
 
@@ -76,7 +76,7 @@ exports.getLeaderboardHistory = async (req, res) => {
 
     const pageOptions = {
         page: parseInt(page, 10) || 0,
-        limit: parseInt(limit, 10) || 10
+        limit: parseInt(limit, 20) || 20
     };
 
     let query = {};
