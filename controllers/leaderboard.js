@@ -1,15 +1,25 @@
 const { default: mongoose } = require("mongoose");
 const Leaderboard = require("../models/Leaderboard");
 const LeaderboardHistory = require("../models/Leaderboardhistory");
+const Leaderboardlimit = require("../models/Leaderboardlimit");
 
 
 exports.getLeaderboard = async (req, res) => {
     const { id, username } = req.user;
 
+    
+    const templimit = await Leaderboardlimit.find()
+
+    let finallimit = 10
+
+    if (templimit.length > 0){
+        finallimit = templimit[0].limit
+    }
+
     await Leaderboard.find({})
         .populate('owner')
         .sort({ amount: -1 })
-        .limit(20)
+        .limit(finallimit)
         .then(async (top10) => {
             const user = await Leaderboard.findOne({ owner: new mongoose.Types.ObjectId(id) });
 
@@ -41,14 +51,21 @@ exports.getLeaderboard = async (req, res) => {
         });
 };
 
-
 exports.getLeaderboardsa = async (req, res) => {
     const { id, username } = req.user;
+
+    const templimit = await Leaderboardlimit.find()
+
+    let finallimit = 10
+
+    if (templimit.length > 0){
+        finallimit = templimit[0].limit
+    }
 
     await Leaderboard.find({})
         .populate('owner')
         .sort({ amount: -1 })
-        .limit(20)
+        .limit(finallimit)
         .then(async (top10) => {
 
 
@@ -69,7 +86,6 @@ exports.getLeaderboardsa = async (req, res) => {
             return res.status(400).json({ message: "bad-request", data: "There's a problem getting the leaderboard. Please contact customer support." });
         });
 };
-
 
 exports.getLeaderboardHistory = async (req, res) => {
     const { page, limit, date, hour } = req.query;
@@ -153,3 +169,40 @@ exports.getLeaderboardDates = async (req, res) => {
         return res.status(400).json({ message: "bad-request", data: "There's a problem getting the leaderboard dates. Please contact customer support." });
     }
 };
+
+exports.getlblimit = async (req, res) => {
+    const {id} = req.user
+
+    const templimit = await Leaderboardlimit.find()
+
+    if (templimit.length <= 0){
+        return res.json({message: "success", data: {
+            limit: 10
+        }})
+    }
+
+    return res.json({message: "success", data: {
+        limit: templimit[0].limit
+    }})
+}
+
+exports.savelblimit = async (req, res) => {
+    const {id} = req.user
+
+    const {limit} = req.body
+
+    if (limit > 20){
+        return res.status(400).json({message: "failed", data: "Maximum limit is 20"})
+    }
+
+    const templimit = await Leaderboardlimit.find()
+
+    if (templimit.length <= 0){
+        await Leaderboardlimit.create({limit: limit})
+        return res.json({message: "success"})
+    }
+
+    await Leaderboardlimit.findOneAndUpdate({_id: new mongoose.Types.ObjectId(templimit[0]._id)}, {limit: limit})
+
+    return res.json({message: "success"})
+}

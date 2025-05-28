@@ -12,6 +12,8 @@ const Wallethistory = require("../models/Wallethistory")
 const Payout = require("../models/Payout")
 const Analytics = require("../models/Analytics")
 const Ingame = require("../models/Ingame")
+const EvententrylimitSchema = require("../models/Evententrylimit")
+const Eventtierentry = require("../models/Eventtierentry")
 
 
 exports.initialize = async () => {
@@ -595,6 +597,43 @@ if (ingamelist.length === 0) {
     //     return
     // })
     
+    //  INITIALIZE PLAYER ENTRY LIMIT
+    const entrylimit = await EvententrylimitSchema.find()
+
+    if (entrylimit.length <= 0){
+        await EvententrylimitSchema.create({limit: 0})
+    }
+
+    //  INITIALIZE EVENT ENTRY
+
+    const evententry = await Eventtierentry.find()
+
+    if (evententry.length <= 0){
+        const entries = [
+            {
+                type: "Free",
+                status: false
+            },
+            {
+                type: "Novice",
+                status: false
+            },
+            {
+                type: "Expert",
+                status: false
+            },
+            {
+                type: "Elite",
+                status: false
+            },
+        ];
+
+        const finalentries = entries.map((tempentries) => ({
+            insertOne: { document: tempentries}
+        }))
+
+        await Eventtierentry.bulkWrite(finalentries)
+    }
 
     console.log("SERVER DATA INITIALIZED")
 }
