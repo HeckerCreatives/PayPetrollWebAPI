@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Leaderboard = require('../models/Leaderboard');
 const LeaderboardHistory = require('../models/Leaderboardhistory');
+const Evententrylimit = require("../models/Evententrylimit")
+const Playerevententrylimit = require("../models/Playerevententrylimit")
 const moment = require('moment-timezone');
 
 exports.resetleaderboard = async (req, res) => {
@@ -23,6 +25,17 @@ exports.resetleaderboard = async (req, res) => {
 
         // Delete the current leaderboard data
         await Leaderboard.updateMany({}, { $set: { amount: 0 } });
+
+        
+        const datalimit = await Evententrylimit.find()
+
+        let limit = 0;
+    
+        if (datalimit.length > 0){
+            limit = datalimit[0].limit
+        }
+
+        await Playerevententrylimit.updateMany({}, {limit: limit})
 
         return res.status(200).json({ message: "success", data: "Leaderboard has been reset and previous data has been archived." });
     } catch (err) {
