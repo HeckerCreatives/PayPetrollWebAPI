@@ -194,8 +194,8 @@ exports.saveeventtimelimit = async (req, res) => {
 
   const {minute, seconds} = req.body
 
-  if (minute < 60 || seconds < 60){
-    return res.status(400).json({message: "failed", data: "Please enter a valid time limit. Minutes should be less than 60 and seconds should be less than 60."})
+  if (minute >= 60 || seconds >= 60){
+    return res.status(400).json({message: "failed", data: "Please enter a valid time limit. Minutes and seconds should be less than 60."})
   }
   const temptime = await Eventtimelimit.find()
 
