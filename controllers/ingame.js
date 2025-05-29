@@ -105,6 +105,7 @@ exports.saveplayerentrylimit = async (req, res) => {
     return res.json({message: "success"})
   }
 
+
   await Evententrylimit.findOneAndUpdate({_id: new mongoose.Types.ObjectId(limit[0]._id)}, {limit: entrylimit})
   .catch(err => {
     console.log(err)
@@ -193,6 +194,9 @@ exports.saveeventtimelimit = async (req, res) => {
 
   const {minute, seconds} = req.body
 
+  if (minute < 60 || seconds < 60){
+    return res.status(400).json({message: "failed", data: "Please enter a valid time limit. Minutes should be less than 60 and seconds should be less than 60."})
+  }
   const temptime = await Eventtimelimit.find()
 
   if (temptime.length <= 0){

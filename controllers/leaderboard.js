@@ -65,7 +65,7 @@ exports.getLeaderboardsa = async (req, res) => {
     await Leaderboard.find({})
         .populate('owner')
         .sort({ amount: -1 })
-        .limit()
+        .limit(finallimit)
         .then(async (top10) => {
             if (top10.username == "testtest1"){
                 console.log(top10)
