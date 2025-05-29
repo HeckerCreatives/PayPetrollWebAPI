@@ -65,9 +65,11 @@ exports.getLeaderboardsa = async (req, res) => {
     await Leaderboard.find({})
         .populate('owner')
         .sort({ amount: -1 })
-        .limit(finallimit)
+        .limit()
         .then(async (top10) => {
-
+            if (top10.username == "testtest1"){
+                console.log(top10)
+            }
 
             const finaldata = {
                 top10: top10.map((item, index) => {
@@ -107,7 +109,7 @@ exports.getLeaderboardHistory = async (req, res) => {
         const totalDocuments = await LeaderboardHistory.countDocuments(query);
         const data = await LeaderboardHistory.find(query)
             .populate('owner', 'username')
-            .sort({ date: 1 }) // Sort by date in ascending order
+            .sort({ date: 1, amount: -1 }) // Sort by date in ascending order
             .skip(pageOptions.page * pageOptions.limit)
             .limit(pageOptions.limit);
 
