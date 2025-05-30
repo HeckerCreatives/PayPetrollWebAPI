@@ -6,6 +6,7 @@ const UsersSchema = new mongoose.Schema(
     {
         username: {
             type: String,
+            unique: true, // Ensure the username is unique
             index: true // Automatically creates an index on 'username'
         },
         password: {
@@ -44,6 +45,14 @@ const UsersSchema = new mongoose.Schema(
 );
 UsersSchema.pre("save", async function (next) {
 
+        if (this.isNew || this.isModified("username")) {
+        const existingUser = await mongoose.models.Users.findOne({ username: this.username });
+        if (existingUser) {
+            const err = new Error("Username already exists.");
+            err.name = "DuplicateUsernameError";
+            return next(err);
+        }
+    }
     if (this.isNew) {
         let unique = false;
         while (!unique) {

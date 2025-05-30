@@ -14,174 +14,131 @@ exports.buytrainer = async (req, res) => {
     const {id, username} = req.user
     const {type, amount } = req.body
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const wallet = await walletbalance("fiatbalance", id)
+    try {
+        const wallet = await walletbalance("fiatbalance", id)
 
-    if (wallet == "failed"){
-        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    }
-
-    if (wallet == "nodata"){
-        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    }
-
-    if (wallet < amount){
-        return res.status(400).json({ message: 'failed', data: `You don't have enough funds to buy this trainer! Please top up first and try again.` })
-    }
-
-    const trainer = await Trainer.findOne({ name: type })
-
-    if (amount < trainer.min){
-        return res.status(400).json({ message: 'failed', data: `The minimum price for ${trainer.name} is ${trainer.min} pesos`})
-    }
-
-    if (amount > trainer.max){
-        return res.status(400).json({ message: 'failed', data: `The maximum price for ${trainer.name} is ${trainer.max} pesos`})
-    }
-
-    const buy = await reducewallet("fiatbalance", amount, id)
-
-    if (buy != "success"){
-        return res.status(400).json({ message: 'failed', data: `You don't have enough funds to buy this trainer! Please top up first and try again.` })
-    }
-
-    const unilevelrewards = await sendcommissionunilevel(amount, id, trainer.name, trainer.rank)
-
-    if (unilevelrewards != "success"){
-        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    }
-
-    const totalincome = (trainer.profit * amount) + amount
-    
-    if (trainer.rank === 'Novice') {
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: 'Invalid user ID' });
-        }
-    
-        const finalamount = await Inventory.aggregate([
-            { $match: { owner: new mongoose.Types.ObjectId(id), rank: "Novice" } },
-            { $group: { _id: null, totalAmount: { $sum: "$price" } } }
-        ]);
-    
-        const totalAmount = finalamount.length > 0 ? finalamount[0].totalAmount : 0;
-        const amountleft = Math.max(0, 5000 - totalAmount);
-        const amountToBuy = Number(amount);
-    
-        if (amountleft < amountToBuy) {
-            return res.status(400).json({
-                message: 'failed',
-                data: `You only have ${amountleft} pesos left to buy a novice trainer.`
-            });
+        if (wallet == "failed" || wallet == "nodata"){
+            throw new Error("There's a problem with your account. Please contact customer support for more details");
         }
 
+        if (wallet < amount){
+            throw new Error("You don't have enough funds to buy this trainer! Please top up first and try again.");
+        }
+
+        const trainer = await Trainer.findOne({ name: type })
+
+        if (amount < trainer.min){
+            throw new Error(`The minimum price for ${trainer.name} is ${trainer.min} pesos`);
+        }
+
+        if (amount > trainer.max){
+            throw new Error(`The maximum price for ${trainer.name} is ${trainer.max} pesos`);
+        }
+
+        if (trainer.rank === 'Novice') {
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                throw new Error('Invalid user ID');
+            }
+        
+            const finalamount = await Inventory.aggregate([
+                { $match: { owner: new mongoose.Types.ObjectId(id), rank: "Novice" } },
+                { $group: { _id: null, totalAmount: { $sum: "$price" } } }
+            ]);
+        
+            const totalAmount = finalamount.length > 0 ? finalamount[0].totalAmount : 0;
+            const amountleft = Math.max(0, 5000 - totalAmount);
+            const amountToBuy = Number(amount);
+        
+            if (amountleft < amountToBuy) {
+                throw new Error(`You only have ${amountleft} pesos left to buy a novice trainer.`);
+            }
+        }
+
+        const buy = await reducewallet("fiatbalance", amount, id)
+        if (buy != "success"){
+            throw new Error("You don't have enough funds to buy this trainer! Please top up first and try again.");
+        }
+
+        const unilevelrewards = await sendcommissionunilevel(amount, id, trainer.name, trainer.rank)
+        if (unilevelrewards != "success"){
+            throw new Error("There's a problem with your account. Please contact customer support for more details");
+        }
+
+        const totalincome = (trainer.profit * amount) + amount
+        
+        const b1t1 = await Maintenance.findOne({ type: "b1t1", value: "1" }).session(session);
+
+        const baseInventory = {
+            owner: new mongoose.Types.ObjectId(id), 
+            type: type,
+            startdate: DateTimeServer(), 
+            duration: trainer.duration, 
+            profit: trainer.profit,
+            expiration: DateTimeServerExpiration(trainer.duration), 
+            rank: trainer.rank, 
+            totalaccumulated: 0, 
+            dailyaccumulated: 0,
+            totalincome: totalincome,
+            dailyclaim: 0,  
+            price: amount,
+            petname: trainer.name,
+            petclean: 0,
+            petlove: 0,
+            petfeed: 0,
+        };
+
+        const b1t1income = totalincome - amount
+
+        const b1t1Inventory = {
+            owner: new mongoose.Types.ObjectId(id), 
+            type: type,
+            startdate: DateTimeServer(), 
+            duration: trainer.duration, 
+            profit: 0,
+            expiration: DateTimeServerExpiration(trainer.duration), 
+            rank: trainer.rank, 
+            totalaccumulated: 0, 
+            dailyaccumulated: 0,
+            totalincome: b1t1income,
+            dailyclaim: 0,  
+            price: b1t1income,
+            petname: trainer.name,
+            petclean: 0,
+            petlove: 0,
+            petfeed: 0,
+        };
+
+        if(b1t1 && b1t1.value === '1' && b1t1.type === 'b1t1'){
+            // Create first trainer
+            await Inventory.create([baseInventory], { session });
+            const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount);
+            await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, amount);
+
+            // Create second trainer (B1T1)
+            await Inventory.create([b1t1Inventory], { session });
+            const inventoryhistory1 = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount);
+            await addanalytics(id, inventoryhistory1.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount);
+        } else {
+            await Inventory.create([baseInventory], { session });
+            const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount);
+            await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount);
+        }
+
+        await session.commitTransaction();
+        return res.json({message: "success"});
+
+    } catch (error) {
+        await session.abortTransaction();
+        return res.status(400).json({
+            message: 'failed',
+            data: error.message || "There's a problem with your account. Please contact customer support for more details"
+        });
+    } finally {
+        session.endSession();
     }
-    
-    
-    
-    const b1t1 = await Maintenance.findOne({ type: "b1t1", value: "1" })
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting b1t1 maintenance. Error: ${err}`)
-
-        return res.status(400).json({message: "bad-request", data: "There's a problem with the server! Please contact customer support."})
-    })
-
-    if(b1t1 && b1t1.value === '1' && b1t1.type === 'b1t1'){
-
-        await Inventory.create({
-            owner: new mongoose.Types.ObjectId(id), 
-            type: type,
-            startdate: DateTimeServer(), 
-            duration: trainer.duration, 
-            profit: trainer.profit,
-            expiration: DateTimeServerExpiration(trainer.duration), 
-            rank: trainer.rank, 
-            totalaccumulated: 0, 
-            dailyaccumulated: 0,
-            totalincome: totalincome,
-            dailyclaim: 0,  
-            price: amount,
-            petname: trainer.name,
-            petclean: 0,
-            petlove: 0,
-            petfeed: 0,
-        })
-    .catch(err => {
-        
-        console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
-        
-        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
-    
-    
-    const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount)
-    
-    await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, amount)
-
-        await Inventory.create({
-            owner: new mongoose.Types.ObjectId(id), 
-            type: type,
-            startdate: DateTimeServer(), 
-            duration: trainer.duration, 
-            expiration: DateTimeServerExpiration(trainer.duration), 
-            rank: trainer.rank, 
-            profit: trainer.profit,
-            totalaccumulated: 0, 
-            dailyaccumulated: 0,
-            totalincome: totalincome,
-            dailyclaim: 0,  
-            price: amount,
-            petname: trainer.name,
-            petclean: 0,
-            petlove: 0,
-            petfeed: 0,
-        })
-    .catch(err => {
-        
-        console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
-        
-        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
-
-
-    const inventoryhistory1 = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount)
-
-    await addanalytics(id, inventoryhistory1.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount)
-
-    } else {
-
-        await Inventory.create({
-            owner: new mongoose.Types.ObjectId(id), 
-            type: type,
-            startdate: DateTimeServer(), 
-            duration: trainer.duration, 
-            expiration: DateTimeServerExpiration(trainer.duration), 
-            rank: trainer.rank, 
-            profit: trainer.profit,
-            totalaccumulated: 0, 
-            dailyaccumulated: 0,
-            totalincome: totalincome,
-            dailyclaim: 0,  
-            price: amount,
-            petname: trainer.name,
-            petclean: 0,
-            petlove: 0,
-            petfeed: 0,
-        })
-    .catch(err => {
-        
-        console.log(`Failed to trainer inventory data for ${username} type: ${type}, error: ${err}`)
-        
-        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
-    })
-    
-    
-    const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount)
-    
-    await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount)
-    }
-
-    return res.json({message: "success"})
 }
 
 exports.claimtotalincome = async (req, res) => {

@@ -56,85 +56,69 @@ exports.register = async (req, res) => {
         return res.status(400).json({message: "failed", data: "Please input a valid email and try again."})
     }
 
-    const searchreferral = await Users.findOne({_id: new mongoose.Types.ObjectId(referral)})
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem searching referral for ${username} referralid: ${referral} Error: ${err}`)
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-        return res.status(400).json({ message: "bad-request", data: "Referral does not exist! Please don't tamper with the url." })
-    })
+    try {
+        // Check for existing user and referral inside the transaction
+        const searchreferral = await Users.findOne({ _id: new mongoose.Types.ObjectId(referral) }).session(session);
+        if (!searchreferral) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: "bad-request", data: "Referral does not exist! Please don't tamper with the url." });
+        }
 
-    if (!searchreferral){
-        console.log(`referral id not exist for ${username} referralid: ${referral}`)
+        const user = await Users.findOne({ username: { $regex: new RegExp('^' + username + '$', 'i') } }).session(session);
+        if (user) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: "failed", data: "You already registered this account! Please login if this is yours." });
+        }
 
-        return res.status(400).json({ message: "bad-request", data: "Referral does not exist! Please don't tamper with the url." })
+        // Create user
+        const player = await Users.create([{
+            username: username,
+            password: password.toLowerCase(),
+            referral: new mongoose.Types.ObjectId(referral),
+            gametoken: "",
+            webtoken: "",
+            bandate: "none",
+            banreason: "",
+            status: "active"
+        }], { session });
+
+        // Create user details
+        await Userdetails.create([{
+            owner: player[0]._id,
+            phonenumber: phonenumber,
+            firstname: "",
+            lastname: "",
+            address: "",
+            city: "",
+            country: "",
+            postalcode: "",
+            profilepicture: ""
+        }], { session });
+
+        // Create wallets
+        const wallets = ["fiatbalance", "gamebalance", "commissionbalance"];
+        for (const type of wallets) {
+            await Userwallets.create([{ owner: player[0]._id, type: type, amount: 0 }], { session });
+        }
+
+        // Create leaderboard
+        await Leaderboard.create([{ owner: player[0]._id, amount: 0 }], { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return res.json({ message: "success" });
+    } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
+        console.log(`Registration error for ${username}: ${err}`);
+        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." });
     }
-
-    const user = await Users.findOne({username: { $regex: new RegExp('^' + username + '$', 'i') }})
-    .then(data => data)
-    .catch(err => {
-
-        console.log(`There's a problem searching user for ${username} Error: ${err}`)
-
-        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
-    })
-
-    if (user){
-        return res.status(400).json({message: "failed", data: "You already registered this account! Please login if this is yours."})
-    }
-
-    const player = await Users.create({username: username, password: password.toLowerCase(), referral: new mongoose.Types.ObjectId(referral), gametoken: "", webtoken: "", bandate: "none", banreason: "", status: "active"})
-    .catch(err => {
-
-        console.log(`There's a problem creating user for ${username} Error: ${err}`)
-
-        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
-    })
-
-
-    await Userdetails.create({owner: new mongoose.Types.ObjectId(player._id),  phonenumber: phonenumber, firstname: "", lastname: "", address: "", city: "", country: "", postalcode: "", profilepicture: ""})
-    .catch(async err => {
-
-        await Users.findOneAndDelete({_id: new mongoose.Types.ObjectId(player._id)})
-
-
-        console.log(`There's a problem creating user details for ${player._id} Error: ${err}`)
-
-        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
-    })
-
-    const wallets = ["fiatbalance", "gamebalance", "commissionbalance"]
-
-    wallets.forEach(async (data) => {
-        await Userwallets.create({owner: new mongoose.Types.ObjectId(player._id), type: data, amount: 0})
-        .catch(async err => {
-
-            await Users.findOneAndDelete({_id: new mongoose.Types.ObjectId(player._id)})
-
-
-            await Userdetails.findOneAndDelete({_id: new mongoose.Types.ObjectId(player._id)})
-
-            console.log(`There's a problem creating user wallet for ${player._id} with type ${data} Error: ${err}`)
-
-            return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
-        })
-    })
-
-    await Leaderboard.create({ owner: new mongoose.Types.ObjectId(player._id), amount: 0 })
-    .catch(async err => {
-        
-        await Users.findOneAndDelete({_id: new mongoose.Types.ObjectId(player._id)})
-        await Userdetails.findOneAndDelete({_id: new mongoose.Types.ObjectId(player._id)})
-        await Userwallets.deleteMany({owner: new mongoose.Types.ObjectId(player._id)})
-
-        console.log(`There's a problem creating leaderboard for ${player._id} Error: ${err}`)
-        return res.status(400).json({ message: "bad-request", data: "There's a problem registering your account. Please try again." })
-    }
-    )
-    
-
-
-    return res.json({message: "success"})
 }
 
 
