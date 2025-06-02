@@ -121,11 +121,13 @@ exports.getLeaderboardHistory = async (req, res) => {
                 rank = pageOptions.page * pageOptions.limit + 1; // Reset rank if the date has changed
             }
 
+            // console.log(item.owner?.username, item.amount, currentDate, rank, item.index);
             finaldata.push({
                 username: item.owner?.username || "N/A",
                 amount: item.amount,
                 date: item.date,
-                rank: rank
+                rank: rank,
+                index: item.index,
             });
 
             previousDate = currentDate;
@@ -146,10 +148,11 @@ exports.getLeaderboardDates = async (req, res) => {
         const dates = await LeaderboardHistory.aggregate([
             {
             $group: {
-                _id: { $substr: ["$eventname", 0, -1] }
+                _id: { $substr: ["$eventname", 0, -1] },
+                index: { $first: "$index" }
             }
             },
-            { $sort: { index: 1 } } // Sort by eventname in ascending order
+            { $sort: { index: 1 } } // Sort by index in ascending order
         ]);
 
         if (dates.length === 0) {

@@ -20,8 +20,11 @@ exports.resetleaderboard = async (req, res) => {
             // Insert the fetched data into the leaderboard history with the current date
             const historyData = currentLeaderboard.map(entry => {
                 const { _id, ...rest } = entry.toObject(); // Remove the _id field
+
+                console.log('entry', entry);
                 return {
-                    ...rest,
+                    owner: entry.owner,
+                    amount: entry.amount,
                     date: philippinesTime,
                     index: index,
                     eventname: `Event Reset #${index} - ${moment().format('YYYY-MM-DD')}`,
