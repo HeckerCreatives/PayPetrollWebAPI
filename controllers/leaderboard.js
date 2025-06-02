@@ -70,7 +70,7 @@ exports.getLeaderboardsa = async (req, res) => {
             const finaldata = {
                 top10: top10.map((item, index) => {
                     return {
-                        username: item.owner.username,
+                        username: item.owner.username || "N/A",
                         amount: item.amount,
                         rank: index + 1
                     };
@@ -122,7 +122,7 @@ exports.getLeaderboardHistory = async (req, res) => {
             }
 
             finaldata.push({
-                username: item.owner.username,
+                username: item.owner?.username || "N/A",
                 amount: item.amount,
                 date: item.date,
                 rank: rank

@@ -412,28 +412,28 @@ if (ingamelist.length === 0) {
 
     // initialize leaderboard for existing users
 
-    // const users = await Users.find()
-    // .then(data => data)
-    // .catch(err => {
-    //     console.log(`There's a problem getting users data ${err}`)
-    //     return
-    // })
+    const users = await Users.find()
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting users data ${err}`)
+        return
+    })
 
-    // if(users.length > 0){
-    //     users.forEach(async user => {
-    //         const hasleaderboard = await Leaderboard.findOne({owner: new mongoose.Types.ObjectId(user._id)})
+    if(users.length > 0){
+        users.forEach(async user => {
+            const hasleaderboard = await Leaderboard.findOne({owner: new mongoose.Types.ObjectId(user._id)})
 
-    //         if(!hasleaderboard){
-    //         await Leaderboard.create({owner: new mongoose.Types.ObjectId(user._id), amount: 0})
-    //         .catch(err => {
-    //             console.log(`There's a problem creating leaderboard data ${err}`)
-    //             return
-    //         })
-    //         console.log(`Leaderboard for ${user.username} created`)
-    //     }
+            if(!hasleaderboard){
+            await Leaderboard.create({owner: new mongoose.Types.ObjectId(user._id), amount: 0})
+            .catch(err => {
+                console.log(`There's a problem creating leaderboard data ${err}`)
+                return
+            })
+            console.log(`Leaderboard for ${user.username} created`)
+        }
 
-    //     })
-    // }
+        })
+    }
 
     // const usersWithoutGameId = await Users.find({ gameid: { $exists: false } });
 
