@@ -67,10 +67,6 @@ exports.getLeaderboardsa = async (req, res) => {
         .sort({ amount: -1 })
         .limit(finallimit)
         .then(async (top10) => {
-            if (top10.username == "testtest1"){
-                console.log(top10)
-            }
-
             const finaldata = {
                 top10: top10.map((item, index) => {
                     return {
@@ -90,7 +86,7 @@ exports.getLeaderboardsa = async (req, res) => {
 };
 
 exports.getLeaderboardHistory = async (req, res) => {
-    const { page, limit, date, hour } = req.query;
+    const { page, limit, date } = req.query;
 
     const pageOptions = {
         page: parseInt(page, 10) || 0,
@@ -99,10 +95,7 @@ exports.getLeaderboardHistory = async (req, res) => {
 
     let query = {};
     if (date) {
-        query.date = { $regex: new RegExp(`^${date}`) }; // Allow date search in YYYY-MM-DD format
-    }
-    if (hour) {
-        query.date = { $regex: new RegExp(`^${date} ${hour}`) }; // Allow date and hour search in YYYY-MM-DD HH format
+        query.eventname = { $regex: new RegExp(`^${date}`) }; // Allow date search in YYYY-MM-DD format
     }
 
     try {
@@ -152,11 +145,11 @@ exports.getLeaderboardDates = async (req, res) => {
     try {
         const dates = await LeaderboardHistory.aggregate([
             {
-                $group: {
-                    _id: { $substr: ["$date", 0, 13] } // Group by the first 13 characters of the date string (YYYY-MM-DD HH)
-                }
+            $group: {
+                _id: { $substr: ["$eventname", 0, -1] }
+            }
             },
-            { $sort: { "_id": 1 } } // Sort by date in ascending order
+            { $sort: { index: 1 } } // Sort by eventname in ascending order
         ]);
 
         if (dates.length === 0) {
