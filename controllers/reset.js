@@ -2,12 +2,21 @@ const mongoose = require('mongoose');
 const Leaderboard = require('../models/Leaderboard');
 const LeaderboardHistory = require('../models/Leaderboardhistory');
 const moment = require('moment-timezone');
+const Playerevententrylimit = require('../models/Playerevententrylimit');
+const Evententrylimit = require('../models/Evententrylimit');
 
 exports.resetleaderboard = async (req, res) => {
     try {
         // Fetch the current leaderboard data
         const currentLeaderboard = await Leaderboard.find({});
         const philippinesTime = moment.tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
+        let entrylimit = 2;
+        const evententrylimit = await Evententrylimit.findOne({});
+        if (evententrylimit && evententrylimit.limit) {
+            entrylimit = evententrylimit.limit;
+        }
+
+        
         // find last entry in the leaderboard history
         const lastEntry = await LeaderboardHistory.findOne({}).sort({ date: -1 }).limit(1);
         let index = 1
@@ -32,6 +41,12 @@ exports.resetleaderboard = async (req, res) => {
             });
             await LeaderboardHistory.insertMany(historyData);
         }
+
+        
+          await Playerevententrylimit.updateMany({}, {limit: entrylimit})
+          .catch(err => {
+            console.log(err)
+          })
 
         // Delete the current leaderboard data
         await Leaderboard.updateMany({}, { $set: { amount: 0 } });
