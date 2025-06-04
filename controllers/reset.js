@@ -4,11 +4,20 @@ const LeaderboardHistory = require('../models/Leaderboardhistory');
 const moment = require('moment-timezone');
 const Playerevententrylimit = require('../models/Playerevententrylimit');
 const Evententrylimit = require('../models/Evententrylimit');
+const Leaderboardlimit = require('../models/Leaderboardlimit');
 
 exports.resetleaderboard = async (req, res) => {
     try {
         // Fetch the current leaderboard data
-        const currentLeaderboard = await Leaderboard.find({});
+      const lblimit = await Leaderboardlimit.findOne({});
+        let limit = 10; // Default limit
+
+        if (lblimit && lblimit.limit) {
+            limit = lblimit.limit;
+        }
+        const currentLeaderboard = await Leaderboard.find({})
+            .sort({ amount: -1, updatedAt: -1 })
+            .limit(limit)
         const philippinesTime = moment.tz('Asia/Manila').format('YYYY-MM-DD HH:mm:ss');
         let entrylimit = 2;
         const evententrylimit = await Evententrylimit.findOne({});

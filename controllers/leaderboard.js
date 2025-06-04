@@ -161,7 +161,7 @@ exports.getLeaderboardDates = async (req, res) => {
 
         let formattedDates = []
         if (dates.length > 0){
-            formattedDates = dates.map(date => date._id != '');
+            formattedDates = dates.filter(date => date._id && date._id.trim() !== '').map(date => date._id);
         }
         return res.json({ message: "success", data: formattedDates });
     } catch (err) {
