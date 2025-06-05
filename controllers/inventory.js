@@ -21,26 +21,26 @@ exports.buytrainer = async (req, res) => {
         const wallet = await walletbalance("fiatbalance", id)
 
         if (wallet == "failed" || wallet == "nodata"){
-            throw new Error("There's a problem with your account. Please contact customer support for more details");
+            return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
         }
 
         if (wallet < amount){
-            throw new Error("You don't have enough funds to buy this trainer! Please top up first and try again.");
+            return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
         }
 
         const trainer = await Trainer.findOne({ name: type })
 
         if (amount < trainer.min){
-            throw new Error(`The minimum price for ${trainer.name} is ${trainer.min} pesos`);
+            return res.status(400).json({message: "failed", data: `The minimum price for ${trainer.name} is ${trainer.min} pesos`});
         }
 
         if (amount > trainer.max){
-            throw new Error(`The maximum price for ${trainer.name} is ${trainer.max} pesos`);
+            return res.status(400).json({message: "failed", data: `The maximum price for ${trainer.name} is ${trainer.max} pesos`});
         }
 
         if (trainer.rank === 'Novice') {
             if (!mongoose.Types.ObjectId.isValid(id)) {
-                throw new Error('Invalid user ID');
+                return res.status(400).json({message: "failed", data: 'Invalid user ID'});
             }
         
             const finalamount = await Inventory.aggregate([
@@ -53,18 +53,24 @@ exports.buytrainer = async (req, res) => {
             const amountToBuy = Number(amount);
         
             if (amountleft < amountToBuy) {
-                throw new Error(`You only have ${amountleft} pesos left to buy a novice trainer.`);
+                return res.status(400).json({message: "failed", data: `You only have ${amountleft} pesos left to buy a novice trainer.`});
+            }
+        } else {
+            // limit to 2 types of trainer per rank
+            const existingTrainers = await Inventory.find({ owner: new mongoose.Types.ObjectId(id), rank: trainer.rank })
+            if (existingTrainers.length >= 2) {
+                return res.status(400).json({message: "failed", data: `You can only have a maximum of 2 trainers of rank ${trainer.rank}.`});
             }
         }
 
         const buy = await reducewallet("fiatbalance", amount, id)
         if (buy != "success"){
-            throw new Error("You don't have enough funds to buy this trainer! Please top up first and try again.");
+            return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
         }
 
         const unilevelrewards = await sendcommissionunilevel(amount, id, trainer.name, trainer.rank)
         if (unilevelrewards != "success"){
-            throw new Error("There's a problem with your account. Please contact customer support for more details");
+            return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
         }
 
         const totalincome = (trainer.profit * amount) + amount
