@@ -129,7 +129,7 @@ exports.getrequesthistoryplayer = async (req, res) => {
 
 exports.getpayoutlist = async (req, res) => {
     const { id, username } = req.user;
-    const { methodtype, date, type, page, limit, searchUsername } = req.query;
+    const { methodtype, date, type, page, limit, searchtype, search } = req.query;
 
     const pageOptions = {
         page: parseInt(page) || 0,
@@ -167,14 +167,38 @@ exports.getpayoutlist = async (req, res) => {
         }
     ];
 
-    // Conditionally add $match stage for username if searchUsername is provided
-    if (searchUsername) {
-        payoutpipelinelist.push({
-            $match: {
-                "ownerinfo.username": { $regex: new RegExp(searchUsername, 'i') }
+    // Conditionally add $match stage for searchtype and search
+    if (searchtype && search) {
+        const matchCondition = {};
+        // searchtypes accountname, accountnumber, username, paymentmethod and netamount
+        if (searchtype === 'accountname') {
+            matchCondition['accountname'] = { $regex: new RegExp(search, 'i') };
+        } else if (searchtype === 'accountnumber') {
+            matchCondition['accountnumber'] = { $regex: new RegExp(search, 'i') };
+        } else if (searchtype === 'username') {
+            payoutpipelinelist.push({
+                $match: {
+                    'ownerinfo.username': { $regex: new RegExp(search, 'i') }
+                }
+            });
+        } else if (searchtype === 'paymentmethod') {
+            matchCondition['paymentmethod'] = { $regex: new RegExp(search, 'i') };
+        } else if (searchtype === 'netamount') {
+            const netAmount = parseFloat(search);
+            if (!isNaN(netAmount)) {
+                if (type === 'gamebalance') {
+                    matchCondition['value'] = netAmount / 0.9; // Reverse calculate the original value
+                } else {
+                    matchCondition['value'] = netAmount;
+                }
             }
+        }
+        payoutpipelinelist.splice(1, 0, {
+            $match: matchCondition
         });
     }
+
+    
 
     if (date) {
         payoutpipelinelist.splice(1, 0, {
@@ -281,7 +305,7 @@ exports.getpayoutlist = async (req, res) => {
 
 exports.getpayouthistorysuperadmin = async (req, res) => {
     const { id, username } = req.user;
-    const { type, page, limit, searchUsername } = req.query;
+    const { type, page, limit, searchtype, search } = req.query;
 
     const pageOptions = {
         page: parseInt(page) || 0,
@@ -319,14 +343,38 @@ exports.getpayouthistorysuperadmin = async (req, res) => {
         }
     ];
 
-    // Conditionally add $match stage for username if searchUsername is provided
-    if (searchUsername) {
-        payoutpipelinelist.push({
-            $match: {
-                "ownerinfo.username": { $regex: new RegExp(searchUsername, 'i') }
+
+    // Conditionally add $match stage for searchtype and search
+    if (searchtype && search) {
+        const matchCondition = {};
+        // searchtypes accountname, accountnumber, username, paymentmethod and netamount
+        if (searchtype === 'accountname') {
+            matchCondition['accountname'] = { $regex: new RegExp(search, 'i') };
+        } else if (searchtype === 'accountnumber') {
+            matchCondition['accountnumber'] = { $regex: new RegExp(search, 'i') };
+        } else if (searchtype === 'username') {
+            payoutpipelinelist.push({
+                $match: {
+                    'ownerinfo.username': { $regex: new RegExp(search, 'i') }
+                }
+            });
+        } else if (searchtype === 'paymentmethod') {
+            matchCondition['paymentmethod'] = { $regex: new RegExp(search, 'i') };
+        } else if (searchtype === 'netamount') {
+            const netAmount = parseFloat(search);
+            if (!isNaN(netAmount)) {
+                if (type === 'gamebalance') {
+                    matchCondition['value'] = netAmount / 0.9; // Reverse calculate the original value
+                } else {
+                    matchCondition['value'] = netAmount;
+                }
             }
+        }
+        payoutpipelinelist.splice(1, 0, {
+            $match: matchCondition
         });
     }
+
 
       payoutpipelinelist.push({
         $sort: {
@@ -372,7 +420,6 @@ exports.getpayouthistorysuperadmin = async (req, res) => {
     try {
         const payoutlistResult = await Payout.aggregate(payoutpipelinelist);
 
-        console.log(payoutlistResult)
 
         const totalPages = payoutlistResult[0].totalPages[0]?.count || 0;
         const pages = Math.ceil(totalPages / pageOptions.limit);

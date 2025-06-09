@@ -38,30 +38,30 @@ exports.buytrainer = async (req, res) => {
             return res.status(400).json({message: "failed", data: `The maximum price for ${trainer.name} is ${trainer.max} pesos`});
         }
 
-        if (trainer.rank === 'Novice') {
-            if (!mongoose.Types.ObjectId.isValid(id)) {
-                return res.status(400).json({message: "failed", data: 'Invalid user ID'});
-            }
+        // if (trainer.rank === 'Novice') {
+        //     // if (!mongoose.Types.ObjectId.isValid(id)) {
+        //     //     return res.status(400).json({message: "failed", data: 'Invalid user ID'});
+        //     // }
         
-            const finalamount = await Inventory.aggregate([
-                { $match: { owner: new mongoose.Types.ObjectId(id), rank: "Novice" } },
-                { $group: { _id: null, totalAmount: { $sum: "$price" } } }
-            ]);
+        //     // const finalamount = await Inventory.aggregate([
+        //     //     { $match: { owner: new mongoose.Types.ObjectId(id), rank: "Novice" } },
+        //     //     { $group: { _id: null, totalAmount: { $sum: "$price" } } }
+        //     // ]);
         
-            const totalAmount = finalamount.length > 0 ? finalamount[0].totalAmount : 0;
-            const amountleft = Math.max(0, 5000 - totalAmount);
-            const amountToBuy = Number(amount);
+        //     // const totalAmount = finalamount.length > 0 ? finalamount[0].totalAmount : 0;
+        //     // const amountleft = Math.max(0, 5000 - totalAmount);
+        //     // const amountToBuy = Number(amount);
         
-            if (amountleft < amountToBuy) {
-                return res.status(400).json({message: "failed", data: `You only have ${amountleft} pesos left to buy a novice trainer.`});
-            }
-        } else {
-            // limit to 2 types of trainer per rank
-            const existingTrainers = await Inventory.find({ owner: new mongoose.Types.ObjectId(id), rank: trainer.rank })
-            if (existingTrainers.length >= 2) {
-                return res.status(400).json({message: "failed", data: `You can only have a maximum of 2 trainers of rank ${trainer.rank}.`});
-            }
-        }
+        //     // if (amountleft < amountToBuy) {
+        //     //     return res.status(400).json({message: "failed", data: `You only have ${amountleft} pesos left to buy a novice trainer.`});
+        //     // }
+        // } else {
+        //     // limit to 2 types of trainer per rank
+        //     // const existingTrainers = await Inventory.find({ owner: new mongoose.Types.ObjectId(id), rank: trainer.rank })
+        //     // if (existingTrainers.length >= 2) {
+        //     //     return res.status(400).json({message: "failed", data: `You can only have a maximum of 2 trainers of rank ${trainer.rank}.`});
+        //     // }
+        // }
 
         const buy = await reducewallet("fiatbalance", amount, id)
         if (buy != "success"){
