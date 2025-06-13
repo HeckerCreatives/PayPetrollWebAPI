@@ -9,6 +9,8 @@ const Inventoryhistory = require("../models/Inventoryhistory")
 const { addwallethistory } = require("../utils/wallethistorytools")
 const Maintenance = require("../models/Maintenance")
 const Dailyclaim = require("../models/Dailyclaim")
+const NFTTrainer = require("../models/Nfttrainer")
+const NFTInventory = require("../models/Nftinventory")
 
 exports.buytrainer = async (req, res) => {
     const {id, username} = req.user
@@ -147,6 +149,89 @@ exports.buytrainer = async (req, res) => {
     }
 }
 
+exports.buynfttrainer = async (req, res) => {
+    const {id, username} = req.user
+    const {nftid, amount } = req.body
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const wallet = await walletbalance("fiatbalance", id)
+
+        if (wallet == "failed" || wallet == "nodata"){
+            return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
+        }
+
+        if (wallet < amount){
+            return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
+        }
+
+        const trainer = await NFTTrainer.findOne({ _id: new mongoose.Types.ObjectId(nftid) })
+
+        // check inventory if the trainer is already purchased
+        const existingTrainer = await NFTInventory.find({ owner: new mongoose.Types.ObjectId(id), petname: trainer.name, rank: trainer.rank });
+        if (existingTrainer.length > 1) {
+            return res.status(400).json({message: "failed", data: `You can only have a maximum of 2 NFT trainers of rank ${trainer.rank}.`});
+        }
+
+        if (trainer.stocks <= 0){
+            return res.status(400).json({message: "failed", data: `No stocks available for ${trainer.name}. Please try again later.`});
+        }
+        if (amount < trainer.min){
+            return res.status(400).json({message: "failed", data: `The minimum price for ${trainer.name} is ${trainer.min} pesos`});
+        }
+
+        if (amount > trainer.max){
+            return res.status(400).json({message: "failed", data: `The maximum price for ${trainer.name} is ${trainer.max} pesos`});
+        }
+
+        const buy = await reducewallet("fiatbalance", amount, id)
+        if (buy != "success"){
+            return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
+        }
+
+        const unilevelrewards = await sendcommissionunilevel(amount, id, trainer.name, trainer.rank)
+        if (unilevelrewards != "success"){
+            return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
+        }
+
+        const totalincome = (trainer.profit * amount) + amount
+        
+        const baseInventory = {
+            owner: new mongoose.Types.ObjectId(id), 
+            type: trainer.type,
+            rank: trainer.rank, 
+            petname: trainer.name,
+            price: amount,
+            profit: trainer.profit,
+            duration: trainer.duration, 
+            expiration: DateTimeServerExpiration(trainer.duration), 
+            totalincome: totalincome,
+            startdate: DateTimeServer(), 
+        };
+
+        await NFTInventory.create([baseInventory], { session });
+        const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount);
+        await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, amount);
+
+        trainer.stocks -= 1;
+        await trainer.save({ session });
+
+        await session.commitTransaction();
+        return res.json({message: "success"});
+
+    } catch (error) {
+        await session.abortTransaction();
+        return res.status(400).json({
+            message: 'failed',
+            data: error.message || "There's a problem with your account. Please contact customer support for more details"
+        });
+    } finally {
+        session.endSession();
+    }
+}
+
 exports.claimtotalincome = async (req, res) => {
     const {id, username} = req.user
     const {trainerid} = req.body
@@ -199,7 +284,7 @@ exports.claimtotalincome = async (req, res) => {
     if (wallethistory.message != "success"){
         return res.status(400).json({message: "bad-request", data: "There's a problem processing your data. Please contact customer support"})
     }
-    await saveinventoryhistory(id, `${trainer.name}`, trainer.rank, `Claim ${trainer.petname}`, trainerdb.totalaccumulated)
+    await saveinventoryhistory(id, `${trainer.name}`, trainer.rank, `Claim ${trainer.name}`, trainerdb.totalaccumulated)
 
     await addanalytics(id, wallethistory.data.transactionid, `gamebalance`, `Player ${username} claim ${trainerdb.totalaccumulated} in Trainer ${trainerdb.type}`, trainerdb.totalaccumulated)
 
@@ -209,6 +294,63 @@ exports.claimtotalincome = async (req, res) => {
 
         return res.status(400).json({message: "bad-request", data: "There's a problem getting the deleting Dailyclaim data! Please contact customer support"})
     })
+    return res.json({message: "success"})
+}
+
+exports.nftclaimtotalincome = async (req, res) => {
+    const {id, username} = req.user
+    const {nftid} = req.body
+
+    if (!nftid || nftid == ""){
+        return res.status(400).json({message: "failed", data: "No trainer is selected"})
+    }
+
+    const trainerdb = await NFTInventory.findOne({_id: new mongoose.Types.ObjectId(nftid)})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the trainer data for ${username}. Error: ${err}`)
+        
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the trainer data! Please contact customer support"})
+    })
+
+    if (!trainerdb){
+        return res.status(400).json({message: "failed", data: "No trainer is selected"})
+    }
+
+    const trainer = await NFTTrainer.findOne({ name: trainerdb.petname })
+
+    if(!trainer){
+        return res.status(400).json({message: "failed", data: "No trainer is selected"})
+    }   
+
+    const remainingtime = RemainingTime(parseFloat(trainerdb.startdate), trainerdb.duration)
+
+    if (remainingtime > 0){
+        return res.status(400).json({message: "failed", data: "There are still remaining time before claiming! Wait for the timer to complete."})
+    }
+
+    const earnings = (trainerdb.price * trainerdb.profit) + trainerdb.price;
+
+    await addwallet("gamebalance", earnings, id)
+
+    await NFTInventory.findOneAndDelete({_id: new mongoose.Types.ObjectId(nftid)})
+    .catch(async err => {
+        console.log(`There's a problem getting the deleting Trainer data for ${username} Trainer id: ${nftid}. Error: ${err}`)
+
+        await reducewallet("gamebalance", earnings, id)
+        
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the finishing Trainer data! Please contact customer support"})
+    })
+
+    const wallethistory = await addwallethistory(id, "gamebalance", earnings, process.env.PAYPETROLLS_ID, trainer.name, trainer.rank)
+
+    if (wallethistory.message != "success"){
+        return res.status(400).json({message: "bad-request", data: "There's a problem processing your data. Please contact customer support"})
+    }
+    await saveinventoryhistory(id, `${trainer.name}`, trainer.rank, `Claim ${trainer.name}`, earnings)
+
+    await addanalytics(id, wallethistory.data.transactionid, `gamebalance`, `Player ${username} claim ${earnings} in Trainer ${trainerdb.type}`, earnings)
+
     return res.json({message: "success"})
 }
 
@@ -299,6 +441,150 @@ exports.getinventory = async (req, res) => {
         return res.status(401).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` });
     }
 };
+
+exports.getnftinventory = async (req, res) => {
+    const {id, username} = req.user
+    const {page, limit} = req.query
+
+    const pageOptions = {
+        page: parseInt(page) || 0,
+        limit: parseInt(limit) || 10
+    }
+
+    const nft = await NFTInventory.find({owner: id})
+    .skip(pageOptions.page * pageOptions.limit)
+    .limit(pageOptions.limit)
+    .sort({'createdAt': -1})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`Failed to get inventory data for ${username}, error: ${err}`)
+
+        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+    console.log(nft)
+
+    const totalPages = await NFTInventory.countDocuments({owner: id})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`Failed to count documents inventory data for ${username}, error: ${err}`)
+
+        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+    const pages = Math.ceil(totalPages / pageOptions.limit)
+
+    const data = {
+        nft: {},
+        totalPages: pages
+    }
+
+    let index = 0
+
+    nft.forEach(datanft => {
+        const {_id, petname, rank, type, price, profit, duration, startdate, createdAt} = datanft
+
+        const earnings = getfarm(startdate, AddUnixtimeDay(startdate, duration), (price * profit) + price)
+        const remainingtime = RemainingTime(parseFloat(startdate), duration)
+
+        const createdAtDate = new Date(createdAt);
+
+        const matureDate = new Date(createdAtDate);
+        matureDate.setDate(createdAtDate.getDate() + duration); 
+
+        data.nft[index] = {
+            nftid: _id,
+            petname: petname,
+            type: type,
+            rank: rank,
+            buyprice: price,
+            profit: profit,
+            duration: duration,
+            earnings: earnings,
+            remainingtime: remainingtime,
+            purchasedate: createdAt,
+            maturedate: matureDate.toISOString()       
+        }
+
+        index++
+    })
+
+    return res.json({message: "success", data: data})
+}
+
+exports.getplayernftinventory = async (req, res) => {
+    const {id, username} = req.user
+    const {playerid, page, limit} = req.query
+
+    const pageOptions = {
+        page: parseInt(page) || 0,
+        limit: parseInt(limit) || 10
+    }
+
+    const nft = await NFTInventory.find({owner: playerid})
+    .skip(pageOptions.page * pageOptions.limit)
+    .limit(pageOptions.limit)
+    .sort({'createdAt': -1})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`Failed to get inventory data for ${username}, error: ${err}`)
+
+        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+
+    const totalPages = await NFTInventory.countDocuments({owner: playerid})
+    .then(data => data)
+    .catch(err => {
+
+        console.log(`Failed to count documents inventory data for ${username}, error: ${err}`)
+
+        return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+    })
+
+    const pages = Math.ceil(totalPages / pageOptions.limit)
+
+    const data = {
+        nft: {},
+        totalPages: pages
+    }
+
+    let index = 0
+
+    nft.forEach(datanft => {
+        const {_id, petname, rank, type, price, profit, duration, startdate, createdAt} = datanft
+
+        const earnings = getfarm(startdate, AddUnixtimeDay(startdate, duration), (price * profit) + price)
+        const remainingtime = RemainingTime(parseFloat(startdate), duration)
+
+        const createdAtDate = new Date(createdAt);
+
+        const matureDate = new Date(createdAtDate);
+        matureDate.setDate(createdAtDate.getDate() + duration); 
+
+        data.nft[index] = {
+            nftid: _id,
+            petname: petname,
+            type: type,
+            rank: rank,
+            buyprice: price,
+            profit: profit,
+            duration: duration,
+            earnings: earnings,
+            remainingtime: remainingtime,
+            purchasedate: createdAt,
+            maturedate: matureDate.toISOString()       
+        }
+
+        index++
+    })
+
+    return res.json({message: "success", data: data})
+}
+
 exports.getunclaimedincomeinventory = async (req, res) => {
     const {id, username} = req.user
 
@@ -544,6 +830,41 @@ exports.maxplayerinventorysuperadmin = async (req, res) => {
     }
 }
 
+
+exports.maxplayernftinventorysuperadmin = async (req, res) => {
+    
+    const {id, username} = req.user
+
+    const {nftid} = req.body
+    
+    if (!mongoose.Types.ObjectId.isValid(nftid)) {
+        return res.status(400).json({ message: 'Invalid NFT ID' });
+    }
+
+    try {    
+
+    
+        const nft = await NFTInventory.findOne({ _id: new mongoose.Types.ObjectId(nftid) });
+
+
+        if (!nft) {
+            return res.status(400).json({ message: 'failed', data: `There's a problem with the server! Please contact customer support.` });
+        }
+
+
+        nft.totalaccumulated = nft.totalincome
+        nft.duration = 0.0007
+
+        await nft.save();
+
+        return res.status(200).json({ message: "success"});
+        
+    } catch (error) {
+        console.error(error)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support."});
+    }
+}
 exports.deleteplayerinventorysuperadmin = async (req, res) => {
     const {id, username} = req.user
 
@@ -607,6 +928,76 @@ exports.deleteplayerinventorysuperadmin = async (req, res) => {
 }
 
 
+
+exports.deleteplayernftinventorysuperadmin = async (req, res) => {
+    const {id, username} = req.user
+
+    const {nftid} = req.body
+    
+    try {    
+
+    
+        const nft = await NFTInventory.findOne({  _id: new mongoose.Types.ObjectId(nftid) });
+
+        if (!nft) {
+            return res.status(400).json({ message: 'failed', data: `There's a problem with the server! Please contact customer support.` });
+        }
+
+
+
+        // we should also find the inventory history and delete it we can find it through the createdAt date and the trainer name
+        const inventoryhistory = await Inventoryhistory.findOne({ 
+            owner: new mongoose.Types.ObjectId(nft.owner),
+            createdAt: {
+            $gte: new Date(nft.createdAt.getTime() - 20000), // 10 seconds before
+            $lte: new Date(nft.createdAt.getTime() + 20000)  // 10 seconds after
+            },
+            trainername: nft.petname,
+            type: `Buy ${nft.petname}`,
+            rank: "NFT",
+            amount: nft.price
+        }).catch(err => {
+            console.log(`Failed to find inventory history for ${username}, error: ${err}`)
+            return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+        })
+
+        if (!inventoryhistory) {
+            return res.status(400).json({ message: 'failed', data: `There's a problem with the server! Please contact customer support.` });
+        }
+
+
+        await NFTInventory.findOneAndDelete({ _id: new mongoose.Types.ObjectId(nftid) })
+        .then(data => data)
+        .catch(err => {
+            console.log(`There's a problem getting the trainer data for ${username}. Error: ${err}`)
+            
+            return res.status(400).json({message: "bad-request", data: "There's a problem getting the trainer data! Please contact customer support"})
+        })
+
+        // we should also find the inventory history and delete it we can find it through the createdAt date and the trainer name
+        await Inventoryhistory.findOneAndDelete({ 
+            owner: new mongoose.Types.ObjectId(nft.owner),
+            createdAt: {
+            $gte: new Date(nft.createdAt.getTime() - 20000), // 10 seconds before
+            $lte: new Date(nft.createdAt.getTime() + 20000)  // 10 seconds after
+            },
+            trainername: nft.petname,
+            type: `Buy ${nft.petname}`,
+            rank: "NFT",
+            amount: nft.price
+        }).catch(err => {
+            console.log(`Failed to delete inventory history for ${username}, error: ${err}`)
+            return res.status(400).json({ message: 'failed', data: `There's a problem with your account. Please contact customer support for more details` })
+        })
+
+        return res.status(200).json({ message: "success"});
+
+    } catch (error) {
+        console.error(error)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support."});
+    }
+}
 exports.deleteplayerinventoryhistorysuperadmin = async (req, res) => {
 
     const {id, username} = req.user

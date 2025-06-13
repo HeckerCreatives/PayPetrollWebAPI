@@ -59,6 +59,9 @@ const inventoryShema = new mongoose.Schema(
         duration: {
             type: Number
         },
+        isb1t1: {
+            type: String
+        },
     },
     {
         timestamps: true

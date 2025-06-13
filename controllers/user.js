@@ -302,6 +302,131 @@ exports.getplayerlist = async (req, res) => {
 
     return res.json({ message: "success", data: data });
 };
+// exports.getplayerlist = async (req, res) => {
+//     const { id, username } = req.user;
+//     const { page, limit, search } = req.query;
+
+//     const pageOptions = {
+//         page: parseInt(page) || 0,
+//         limit: parseInt(limit) || 10
+//     };
+
+//     const userlistpipeline = [];
+
+//     if (search) {
+//         userlistpipeline.push({
+//             $match: {
+//                 username: { $regex: search, $options: "i" }
+//             }
+//         });
+//     }
+
+//     userlistpipeline.push(
+//         {
+//             $facet: {
+//                 totalCount: [
+//                     {
+//                         $count: "total"
+//                     }
+//                 ],
+//                 data: [
+//                     {
+//                         $lookup: {
+//                             from: "userdetails", // Assuming the collection name for UserDetails is "userdetails"
+//                             localField: "_id",
+//                             foreignField: "owner",
+//                             as: "userDetails"
+//                         }
+//                     },
+//                     {
+//                         $lookup: {
+//                             from: "users", // Assuming the collection name for Users is "users"
+//                             localField: "referral",
+//                             foreignField: "_id",
+//                             as: "referredUser"
+//                         }
+//                     },
+//                     {
+//                         $project: {
+//                             username: 1,
+//                             phonenumber: { $arrayElemAt: ["$userDetails.phonenumber", 0] },
+//                             referralUsername: { $arrayElemAt: ["$referredUser.username", 0] },
+//                             createdAt: 1,
+//                             status: 1
+//                         }
+//                     },
+//                     {
+//                         $skip: pageOptions.page * pageOptions.limit
+//                     },
+//                     {
+//                         $limit: pageOptions.limit
+//                     }
+//                 ]
+//             }
+//         }
+//     );
+
+//     const userlist = await Users.aggregate(userlistpipeline)
+//         .catch(err => {
+//             console.log(`There's a problem getting users list for ${username} Error: ${err}`);
+//             return res.status(400).json({ message: "bad-request", data: "There's a problem getting your user details. Please contact customer support." });
+//         });
+
+//     const data = {
+//         totalPages: Math.ceil(userlist[0].totalCount[0].total / pageOptions.limit),
+//         userlist: []
+//     };
+
+//         const activeusers = await Payin.aggregate([
+//         {
+//             $lookup: {
+//                 from: "users",
+//                 localField: "owner",
+//                 foreignField: "_id",
+//                 as: "user"
+//             }
+//         },
+//         {
+//             $match: { 
+//                 status: "done",
+//                 "user.status": { $ne: "banned" } // Exclude banned users
+//             }
+//         },
+//         {
+//             $group: {
+//                 _id: "$owner",
+//             }
+//         },
+//     ]);
+
+//     const activeUserIds = new Set(activeusers.map(u => u._id.toString()));
+
+//         userlist[0].data.forEach(value => {
+//             const { _id, username, status, createdAt, phonenumber, referralUsername } = value;
+
+//             let displayStatus;
+//             if (status === "banned") {
+//                 displayStatus = "banned";
+//             } else if (activeUserIds.has(_id.toString())) {
+//                 displayStatus = "active";
+//             } else {
+//                 displayStatus = "inactive";
+//             }
+
+//             data["userlist"].push({
+//                 id: _id,
+//                 username: username,
+//                 phonenumber: phonenumber,
+//                 referralUsername: referralUsername,
+//                 status: displayStatus,
+//                 createdAt: createdAt
+//             });
+//         });
+//         const statusOrder = { active: 0, inactive: 1, banned: 2 };
+//         data["userlist"].sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
+
+//     return res.json({ message: "success", data: data });
+// };
 
 exports.banunbanuser = async (req, res) => {
     const {id, username} = req.user
