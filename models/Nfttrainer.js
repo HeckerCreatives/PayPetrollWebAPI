@@ -6,11 +6,9 @@ const NFTTrainerSchema = new mongoose.Schema(
         name: {
             type: String,
         },
-        min: {
+        price: {
             type: Number,
-        },
-        max: {
-            type: Number,
+            default: 0,
         },
         profit: {
             type: Number,

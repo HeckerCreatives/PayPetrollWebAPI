@@ -11,6 +11,7 @@ const Maintenance = require("../models/Maintenance")
 const Dailyclaim = require("../models/Dailyclaim")
 const NFTTrainer = require("../models/Nfttrainer")
 const NFTInventory = require("../models/Nftinventory")
+const NFTLimit = require("../models/Nftlimit")
 
 exports.buytrainer = async (req, res) => {
     const {id, username} = req.user
@@ -151,59 +152,56 @@ exports.buytrainer = async (req, res) => {
 
 exports.buynfttrainer = async (req, res) => {
     const {id, username} = req.user
-    const {nftid, amount } = req.body
+    const {nftid } = req.body
 
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
         const wallet = await walletbalance("fiatbalance", id)
-
+        const trainer = await NFTTrainer.findOne({ _id: new mongoose.Types.ObjectId(nftid) })
+        const nftlimit = await NFTLimit.findOne({ nft: new mongoose.Types.ObjectId(nftid) })
+        if(!trainer || !nftlimit){
+            return res.status(400).json({message: "failed", data: "Trainer not found or invalid NFT ID."});
+        }
         if (wallet == "failed" || wallet == "nodata"){
             return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
         }
 
-        if (wallet < amount){
+        if (wallet < trainer.price){
             return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
         }
 
-        const trainer = await NFTTrainer.findOne({ _id: new mongoose.Types.ObjectId(nftid) })
 
         // check inventory if the trainer is already purchased
         const existingTrainer = await NFTInventory.find({ owner: new mongoose.Types.ObjectId(id), petname: trainer.name, rank: trainer.rank });
-        if (existingTrainer.length > 1) {
-            return res.status(400).json({message: "failed", data: `You can only have a maximum of 2 NFT trainers of rank ${trainer.rank}.`});
+        if (existingTrainer.length >= nftlimit.limit) {
+            return res.status(400).json({message: "failed", data: `You can only have a maximum of ${nftlimit.limit} NFT trainers of name ${trainer.name}.`});
         }
 
         if (trainer.stocks <= 0){
             return res.status(400).json({message: "failed", data: `No stocks available for ${trainer.name}. Please try again later.`});
         }
-        if (amount < trainer.min){
-            return res.status(400).json({message: "failed", data: `The minimum price for ${trainer.name} is ${trainer.min} pesos`});
-        }
 
-        if (amount > trainer.max){
-            return res.status(400).json({message: "failed", data: `The maximum price for ${trainer.name} is ${trainer.max} pesos`});
-        }
 
-        const buy = await reducewallet("fiatbalance", amount, id)
+        const buy = await reducewallet("fiatbalance", trainer.price, id)
         if (buy != "success"){
             return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
         }
 
-        const unilevelrewards = await sendcommissionunilevel(amount, id, trainer.name, trainer.rank)
+        const unilevelrewards = await sendcommissionunilevel(trainer.price, id, trainer.name, trainer.rank)
         if (unilevelrewards != "success"){
             return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
         }
 
-        const totalincome = (trainer.profit * amount) + amount
+        const totalincome = (trainer.profit * trainer.price) + trainer.price
         
         const baseInventory = {
             owner: new mongoose.Types.ObjectId(id), 
             type: trainer.type,
             rank: trainer.rank, 
             petname: trainer.name,
-            price: amount,
+            price: trainer.price,
             profit: trainer.profit,
             duration: trainer.duration, 
             expiration: DateTimeServerExpiration(trainer.duration), 
@@ -212,8 +210,8 @@ exports.buynfttrainer = async (req, res) => {
         };
 
         await NFTInventory.create([baseInventory], { session });
-        const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount);
-        await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, amount);
+        const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, trainer.price);
+        await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, trainer.price);
 
         trainer.stocks -= 1;
         await trainer.save({ session });
@@ -613,16 +611,26 @@ exports.getunclaimedincomeinventory = async (req, res) => {
 }
 exports.getinventoryhistory = async (req, res) => {
     const {id, username} = req.user
-    const {type, page, limit} = req.query
+    const {type, page, limit, rank} = req.query
 
     const pageOptions = {
         page: parseInt(page) || 0,
         limit: parseInt(limit) || 10
     }
 
+    const rankfilter = {
+
+    }
+    if (rank === "nft"){
+        rankfilter.rank = "NFT"
+    } else if (rank === "fiat"){
+        rankfilter.rank = { $ne: "NFT" }
+    } 
+
     const history = await Inventoryhistory.find({
         owner: new mongoose.Types.ObjectId(id),
-        type: { $regex: type, $options: "i" } // Case-insensitive regex search
+        type: { $regex: type, $options: "i" }, // Case-insensitive regex search
+        ...rankfilter
     })
     .skip(pageOptions.page * pageOptions.limit)
     .limit(pageOptions.limit)
@@ -643,7 +651,8 @@ exports.getinventoryhistory = async (req, res) => {
 
     const totalPages = await Inventoryhistory.countDocuments({
         owner: new mongoose.Types.ObjectId(id),
-        type: { $regex: type, $options: "i" } 
+        type: { $regex: type, $options: "i" },
+        ...rankfilter 
     })
     .then(data => data)
     .catch(err => {
@@ -734,14 +743,20 @@ exports.getplayerinventoryforadmin = async (req, res) => {
 
 exports.getinventoryhistoryuseradmin = async (req, res) => {
     const {id, username} = req.user
-    const {userid, type, page, limit} = req.query
+    const {userid, type, page, limit, rank} = req.query
 
     const pageOptions = {
         page: parseInt(page) || 0,
         limit: parseInt(limit) || 10
     }
+    const rankfilter = {};
+    if (rank === "nft"){
+        rankfilter.rank = "NFT";
+    } else if (rank === "fiat"){
+        rankfilter.rank = { $ne: "NFT" };
+    }
 
-    const history = await Inventoryhistory.find({ owner: new mongoose.Types.ObjectId(userid), type: { $regex: type, $options: "i" }})    
+    const history = await Inventoryhistory.find({ owner: new mongoose.Types.ObjectId(userid), type: { $regex: type, $options: "i" }, ...rankfilter })    
     .skip(pageOptions.page * pageOptions.limit)
     .limit(pageOptions.limit)
     .sort({'createdAt': -1})
@@ -759,7 +774,7 @@ exports.getinventoryhistoryuseradmin = async (req, res) => {
         }})
     }
 
-    const totalPages = await Inventoryhistory.countDocuments({owner: new mongoose.Types.ObjectId(userid), type: { $regex: type, $options: "i" }})
+    const totalPages = await Inventoryhistory.countDocuments({owner: new mongoose.Types.ObjectId(userid), type: { $regex: type, $options: "i" }, ...rankfilter })
     .then(data => data)
     .catch(err => {
 
