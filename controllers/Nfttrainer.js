@@ -1,7 +1,6 @@
 const { default: mongoose } = require("mongoose");
-const { nftdata, nftlimit } = require("../initialization/data");
+const { nftdata } = require("../initialization/data");
 const NFTTrainer = require("../models/Nfttrainer");
-const NFTLimit = require("../models/Nftlimit");
 
 
 exports.getNfttrainer = async (req, res) => {
@@ -17,7 +16,6 @@ exports.getNfttrainer = async (req, res) => {
 
     if (!data || data.length === 0) {
          data = await NFTTrainer.insertMany(nftdata)
-         await NFTLimit.insertMany(nftlimit)
     }
 
     // format data 
@@ -30,14 +28,15 @@ exports.getNfttrainer = async (req, res) => {
         duration: item.duration,
         type: item.type,
         rank: item.rank,
-        stocks: item.stocks
+        stocks: item.stocks,
+        limit: item.limit || 0
     }));
 
     return res.status(200).json({ message: "success", data: formattedData });
 }
 
 exports.editNfttrainer = async (req, res) => {
-    const { nftid, name, profit, duration, price, type, rank, stocks } = req.body;
+    const { nftid, name, profit, duration, price, type, rank, stocks, limit } = req.body;
 
     const updateData = {};
 
@@ -48,6 +47,7 @@ exports.editNfttrainer = async (req, res) => {
     if (profit) updateData.profit = parseFloat(profit);
     if (duration) updateData.duration = parseFloat(duration);
     if (price) updateData.price = parseFloat(price);
+    if (limit) updateData.limit = parseFloat(limit); 
 
 
     const numericValues = [price, profit, duration].filter(val => val !== undefined);
@@ -68,51 +68,3 @@ exports.editNfttrainer = async (req, res) => {
     return res.status(200).json({ message: "success" });
 }
 
-
-exports.getnftlimit = async (req, res) => {
-    const { id, username } = req.user;
-
-    let data = await NFTLimit.find()
-        .populate("nft", "name price stocks")
-        .then(data => data)
-        .catch(err => {
-            console.error("Error fetching NFT limit:", err);
-            return res.status(500).json({ message: "failed", data: "Internal server error." });
-        });
-    if (!data || data.length === 0) {
-        data = await NFTLimit.insertMany(nftlimit);
-    }
-
-    const formattedData = data.map(item => ({
-        id: item._id,
-        nftname: item?.nft?.name || "Unknown NFT",
-        limit: item.limit
-    }));
-
-
-    return res.status(200).json({ message: "success", data: formattedData});
-}
-
-exports.editnftlimit = async (req, res) => {
-    const { id, limit } = req.body;
-
-    if (!id || !limit) {
-        return res.status(400).json({ message: "failed", data: "ID and limit are required." });
-    }
-    if (limit < 0) {
-        return res.status(400).json({ message: "failed", data: "Limit cannot be negative." });
-    }
-
-    await NFTLimit.findOneAndUpdate(
-        { _id: new mongoose.Types.ObjectId(id) },
-        { $set: { limit: parseInt(limit) } },
-        { new: true, upsert: true }
-    )
-        .then(data => data)
-        .catch(err => {
-            console.error("Error updating NFT limit:", err);
-            return res.status(500).json({ message: "bad-request", data: "Internal server error." });
-        });
-
-    return res.status(200).json({ message: "success" });
-}

@@ -10,7 +10,8 @@ exports.nftdata = [
     duration: 6,
     type: "NFT",
     rank: "NFT",
-    stocks: 10
+    stocks: 10,
+    limit: 1
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6f8"),
@@ -20,7 +21,8 @@ exports.nftdata = [
     duration: 7,
     type: "NFT",
     rank: "NFT",
-    stocks: 8
+    stocks: 8,
+    limit: 2
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6f9"),
@@ -30,7 +32,8 @@ exports.nftdata = [
     duration: 8,
     type: "NFT",
     rank: "NFT",
-    stocks: 5
+    stocks: 5,
+    limit: 3
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6fa"),
@@ -40,7 +43,8 @@ exports.nftdata = [
     duration: 9,
     type: "NFT",
     rank: "NFT",
-    stocks: 5
+    stocks: 5,
+    limit: 4
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6fb"),
@@ -50,29 +54,8 @@ exports.nftdata = [
     duration: 10,
     type: "NFT",
     rank: "NFT",
-    stocks: 3
+    stocks: 3,
+    limit: 5
 }    
 ]
 
-exports.nftlimit = [
-    {
-        nft: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6f7"), // IRON PUPPY
-       limit: 1
-    },
-    {
-        nft: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6f8"), // Shiba Ihulk
-        limit: 2
-    },
-    {
-        nft: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6f9"), // Captain Hachi
-        limit: 3
-    },
-    {
-        nft: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6fa"), // Thor Inu
-        limit: 4
-    },
-    {
-        nft: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6fb"), // Shibathanos
-        limit: 5
-    }
-]

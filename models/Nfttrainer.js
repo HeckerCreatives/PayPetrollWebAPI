@@ -28,6 +28,10 @@ const NFTTrainerSchema = new mongoose.Schema(
             type: Number,
             default: 0
         },
+        limit: {
+            type: Number,
+            default: 0
+        }
 
     },
     {

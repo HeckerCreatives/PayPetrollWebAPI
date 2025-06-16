@@ -11,7 +11,6 @@ const Maintenance = require("../models/Maintenance")
 const Dailyclaim = require("../models/Dailyclaim")
 const NFTTrainer = require("../models/Nfttrainer")
 const NFTInventory = require("../models/Nftinventory")
-const NFTLimit = require("../models/Nftlimit")
 
 exports.buytrainer = async (req, res) => {
     const {id, username} = req.user
@@ -160,8 +159,7 @@ exports.buynfttrainer = async (req, res) => {
     try {
         const wallet = await walletbalance("fiatbalance", id)
         const trainer = await NFTTrainer.findOne({ _id: new mongoose.Types.ObjectId(nftid) })
-        const nftlimit = await NFTLimit.findOne({ nft: new mongoose.Types.ObjectId(nftid) })
-        if(!trainer || !nftlimit){
+        if(!trainer){
             return res.status(400).json({message: "failed", data: "Trainer not found or invalid NFT ID."});
         }
         if (wallet == "failed" || wallet == "nodata"){
@@ -175,8 +173,8 @@ exports.buynfttrainer = async (req, res) => {
 
         // check inventory if the trainer is already purchased
         const existingTrainer = await NFTInventory.find({ owner: new mongoose.Types.ObjectId(id), petname: trainer.name, rank: trainer.rank });
-        if (existingTrainer.length >= nftlimit.limit) {
-            return res.status(400).json({message: "failed", data: `You can only have a maximum of ${nftlimit.limit} NFT trainers of name ${trainer.name}.`});
+        if (existingTrainer.length >= trainer.limit) {
+            return res.status(400).json({message: "failed", data: `You can only have a maximum of ${trainer.limit} NFT trainers of name ${trainer.name}.`});
         }
 
         if (trainer.stocks <= 0){
