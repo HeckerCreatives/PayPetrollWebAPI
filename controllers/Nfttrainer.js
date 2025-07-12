@@ -29,14 +29,15 @@ exports.getNfttrainer = async (req, res) => {
         type: item.type,
         rank: item.rank,
         stocks: item.stocks,
-        limit: item.limit || 0
+        limit: item.limit || 0,
+        isActive: item.isActive || true
     }));
 
     return res.status(200).json({ message: "success", data: formattedData });
 }
 
 exports.editNfttrainer = async (req, res) => {
-    const { nftid, name, profit, duration, price, type, rank, stocks, limit } = req.body;
+    const { nftid, name, profit, duration, price, type, rank, stocks, limit, isActive } = req.body;
 
     const updateData = {};
 
@@ -48,6 +49,7 @@ exports.editNfttrainer = async (req, res) => {
     if (duration) updateData.duration = parseFloat(duration);
     if (price) updateData.price = parseFloat(price);
     if (limit) updateData.limit = parseFloat(limit); 
+    if (isActive !== undefined) updateData.isActive = isActive;
 
 
     const numericValues = [price, profit, duration].filter(val => val !== undefined);

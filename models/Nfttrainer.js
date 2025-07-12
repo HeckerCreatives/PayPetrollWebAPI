@@ -31,8 +31,11 @@ const NFTTrainerSchema = new mongoose.Schema(
         limit: {
             type: Number,
             default: 0
+        },
+        isActive: {
+            type: Boolean,
+            default: true
         }
-
     },
     {
         tiimestamps: true,
