@@ -125,6 +125,7 @@ exports.register = async (req, res) => {
 exports.authlogin = async(req, res) => {
     const { username, password, ipAddress } = req.query;
 
+    console.log(req.query)
     if (username.length < 5 || username.length > 40){
         return res.status(400).json({message: "failed", data: "Minimum of 5 and maximum of 20 characters only for username! Please try again."})
     }

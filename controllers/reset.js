@@ -29,7 +29,7 @@ exports.resetleaderboard = async (req, res) => {
         // find last entry in the leaderboard history
         const lastEntry = await LeaderboardHistory.findOne({}).sort({ date: -1 }).limit(1);
         let index = 1
-        if (lastEntry) {
+        if (lastEntry.index != null) {
             // If there is a last entry, set the index to the next number
             index = lastEntry.index + 1;
         }
@@ -39,7 +39,8 @@ exports.resetleaderboard = async (req, res) => {
             const historyData = currentLeaderboard.map(entry => {
                 const { _id, ...rest } = entry.toObject(); // Remove the _id field
 
-                console.log('entry', entry);
+                // console.log('entry', entry);
+                console.log('index', index)
                 return {
                     owner: entry.owner,
                     amount: entry.amount,
