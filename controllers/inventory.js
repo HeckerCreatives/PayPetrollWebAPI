@@ -186,6 +186,9 @@ exports.buynfttrainer = async (req, res) => {
         if (trainer.stocks <= 0){
             return res.status(400).json({message: "failed", data: `No stocks available for ${trainer.name}. Please try again later.`});
         }
+        if (trainer.stocks < quantity){
+            return res.status(400).json({message: "failed", data: `Only ${trainer.stocks} stocks available for ${trainer.name}. Please try again later.`});
+        }
 
         let price = trainer.price * quantity;
         const buy = await reducewallet("fiatbalance", price, id)
