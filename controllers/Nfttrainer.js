@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose");
 const { nftdata } = require("../initialization/data");
 const NFTTrainer = require("../models/Nfttrainer");
+const NFTInventory = require("../models/Nftinventory");
 
 
 exports.getNfttrainer = async (req, res) => {
@@ -18,8 +19,12 @@ exports.getNfttrainer = async (req, res) => {
          data = await NFTTrainer.insertMany(nftdata)
     }
 
-
-    console.log("Fetched NFT trainers:", data);
+    let existingtrianers = await NFTInventory.find({ owner: new mongoose.Types.ObjectId(id) })
+        .then(data => data)
+        .catch(err => {
+            console.error("Error fetching NFT inventory:", err);
+            return res.status(500).json({ message: "failed", data: "Internal server error." });
+        });
     // format data 
 
     const formattedData = data.map(item => ({
@@ -33,6 +38,8 @@ exports.getNfttrainer = async (req, res) => {
         stocks: item.stocks,
         limit: item.limit || 0,
         isActive: item.isActive !== undefined ? item.isActive : true, 
+        isPurchased: existingtrianers.some(trainer => trainer.petname === item.name && trainer.rank === item.rank) || false,
+        purchasedCount: existingtrianers.filter(trainer => trainer.petname === item.name && trainer.rank === item.rank).length || 0
     }));
 
     return res.status(200).json({ message: "success", data: formattedData });

@@ -151,7 +151,7 @@ exports.buytrainer = async (req, res) => {
 
 exports.buynfttrainer = async (req, res) => {
     const {id, username} = req.user
-    const {nftid } = req.body
+    const {nftid, quantity } = req.body
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -166,14 +166,16 @@ exports.buynfttrainer = async (req, res) => {
             return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
         }
 
-        if (wallet < trainer.price){
+        if (wallet < trainer.price * quantity){
             return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
         }
 
 
         // check inventory if the trainer is already purchased
         const existingTrainer = await NFTInventory.find({ owner: new mongoose.Types.ObjectId(id), petname: trainer.name, rank: trainer.rank });
-        if (existingTrainer.length >= trainer.limit) {
+        
+        const isLimit = existingTrainer.length + quantity >= trainer.limit;
+        if (isLimit) {
             return res.status(400).json({message: "failed", data: `You can only have a maximum of ${trainer.limit} NFT trainers of name ${trainer.name}.`});
         }
 
@@ -207,11 +209,13 @@ exports.buynfttrainer = async (req, res) => {
             startdate: DateTimeServer(), 
         };
 
-        await NFTInventory.create([baseInventory], { session });
-        const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, trainer.price);
-        await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, trainer.price);
+        for (let i = 0; i < quantity; i++) {
+            await NFTInventory.create([baseInventory], { session });
+            const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, trainer.price);
+            await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, trainer.price);
+        }
 
-        trainer.stocks -= 1;
+        trainer.stocks -= quantity;
         await trainer.save({ session });
 
         await session.commitTransaction();
