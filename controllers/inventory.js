@@ -174,7 +174,7 @@ exports.buynfttrainer = async (req, res) => {
         // check inventory if the trainer is already purchased
         const existingTrainer = await NFTInventory.find({ owner: new mongoose.Types.ObjectId(id), petname: trainer.name, rank: trainer.rank });
         
-        const isLimit = existingTrainer.length + quantity >= trainer.limit;
+        const isLimit = existingTrainer.length + quantity > trainer.limit;
         if (isLimit) {
             return res.status(400).json({message: "failed", data: `You can only have a maximum of ${trainer.limit} NFT trainers of name ${trainer.name}.`});
         }
