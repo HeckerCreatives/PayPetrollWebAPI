@@ -162,6 +162,9 @@ exports.buynfttrainer = async (req, res) => {
         if(!trainer){
             return res.status(400).json({message: "failed", data: "Trainer not found or invalid NFT ID."});
         }
+        if(!quantity || quantity <= 0){
+            return res.status(400).json({message: "failed", data: "Invalid quantity specified."});
+        }
         if (wallet == "failed" || wallet == "nodata"){
             return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
         }
@@ -169,6 +172,7 @@ exports.buynfttrainer = async (req, res) => {
         if (wallet < trainer.price * quantity){
             return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
         }
+
 
 
         // check inventory if the trainer is already purchased
@@ -183,8 +187,8 @@ exports.buynfttrainer = async (req, res) => {
             return res.status(400).json({message: "failed", data: `No stocks available for ${trainer.name}. Please try again later.`});
         }
 
-
-        const buy = await reducewallet("fiatbalance", trainer.price, id)
+        let price = trainer.price * quantity;
+        const buy = await reducewallet("fiatbalance", price, id)
         if (buy != "success"){
             return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
         }
