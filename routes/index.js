@@ -20,6 +20,7 @@ const routers = app => {
     app.use("/walletconversion", require("./walletconversion"))
     app.use("/wallethistory", require("./wallethistory"))
     app.use("/ingame", require("./ingame"))
+    app.use("/nftlist", require("./nftlist"))
 }
 
 module.exports = routers
