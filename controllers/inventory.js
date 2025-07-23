@@ -196,10 +196,6 @@ exports.buynfttrainer = async (req, res) => {
             return res.status(400).json({message: "failed", data: "You don't have enough funds to buy this trainer! Please top up first and try again."});
         }
 
-        const unilevelrewards = await sendcommissionunilevel(trainer.price, id, trainer.name, trainer.rank)
-        if (unilevelrewards != "success"){
-            return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
-        }
 
         const totalincome = (trainer.profit * trainer.price) + trainer.price
         
@@ -217,6 +213,11 @@ exports.buynfttrainer = async (req, res) => {
         };
 
         for (let i = 0; i < quantity; i++) {
+            
+            const unilevelrewards = await sendcommissionunilevel(trainer.price, id, trainer.name, trainer.rank)
+            if (unilevelrewards != "success"){
+                return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
+            }
             await NFTInventory.create([baseInventory], { session });
             const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, trainer.price);
             await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, trainer.price);
