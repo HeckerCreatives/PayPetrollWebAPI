@@ -28,7 +28,7 @@ exports.getNfttrainer = async (req, res) => {
         });
     // format data 
 
-    let totalnftpurchasedcount = await Inventoryhistory.countDocuments({ rank: "NFT", type: { $regex: /^Buy/i } });
+    let totalnftpurchasedcount = await Inventoryhistory.find({ rank: "NFT", type: { $regex: /^Buy/i } });
 
     const formattedData = data.map(item => ({
         id: item._id,
@@ -43,7 +43,7 @@ exports.getNfttrainer = async (req, res) => {
         isActive: item.isActive !== undefined ? item.isActive : true, 
         isPurchased: existingtrianers.some(trainer => trainer.petname === item.name && trainer.rank === item.rank) || false,
         purchasedCount: existingtrianers.filter(trainer => trainer.petname === item.name && trainer.rank === item.rank).length || 0,
-        timesbought: totalnftpurchasedcount,
+        timesbought: totalnftpurchasedcount.filter(trainer => trainer.trainername === item.name && trainer.rank === item.rank).length || 0,
     }));
 
     return res.status(200).json({ message: "success", data: formattedData });
