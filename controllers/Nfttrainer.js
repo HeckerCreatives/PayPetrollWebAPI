@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const { nftdata } = require("../initialization/data");
 const NFTTrainer = require("../models/Nfttrainer");
 const NFTInventory = require("../models/Nftinventory");
+const Inventoryhistory = require("../models/Inventoryhistory");
 
 
 exports.getNfttrainer = async (req, res) => {
@@ -27,6 +28,8 @@ exports.getNfttrainer = async (req, res) => {
         });
     // format data 
 
+    let totalnftpurchasedcount = await Inventoryhistory.countDocuments({ rank: "NFT", type: { $regex: /^Buy/i } });
+
     const formattedData = data.map(item => ({
         id: item._id,
         name: item.name,
@@ -39,7 +42,8 @@ exports.getNfttrainer = async (req, res) => {
         limit: item.limit || 0,
         isActive: item.isActive !== undefined ? item.isActive : true, 
         isPurchased: existingtrianers.some(trainer => trainer.petname === item.name && trainer.rank === item.rank) || false,
-        purchasedCount: existingtrianers.filter(trainer => trainer.petname === item.name && trainer.rank === item.rank).length || 0
+        purchasedCount: existingtrianers.filter(trainer => trainer.petname === item.name && trainer.rank === item.rank).length || 0,
+        timesbought: totalnftpurchasedcount,
     }));
 
     return res.status(200).json({ message: "success", data: formattedData });
