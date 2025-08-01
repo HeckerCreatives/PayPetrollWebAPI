@@ -30,7 +30,7 @@ exports.getNfttrainer = async (req, res) => {
                 { upsert: true, new: true }
             );
         }
-        data = await NFTTrainer.find({ name: { $in: newnfts } });
+        data = await NFTTrainer.find();
     }
 
     let existingtrianers = await NFTInventory.find({ owner: new mongoose.Types.ObjectId(id) })
