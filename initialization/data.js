@@ -59,3 +59,61 @@ exports.nftdata = [
 }    
 ]
 
+
+exports.newnftdata = [
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e701"),
+    name: "Spider Puppy",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e702"),
+    name: "Black Hachi",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e703"),
+    name: "Shiba Widow",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e704"),
+    name: "Doctor Puppy",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e705"),
+    name: "Captain Inu",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0
+},
+]

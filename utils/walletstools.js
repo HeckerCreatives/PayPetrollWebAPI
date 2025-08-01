@@ -220,7 +220,6 @@ exports.sendcommissionunilevel = async (commissionAmount, id, trainername, train
         return "failed"
     })
 
-    console.log(unilevelresult)
 
     const historypipeline = []
     const analyticspipeline = []
