@@ -11,18 +11,20 @@ exports.nftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 10,
-    limit: 1
+    limit: 1,
+    isActive: false
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6f8"),
-    name: "Shiba Ihulk",
+    name: "Shiba Hulk",
     price: 1000,
     profit: 0.6,
     duration: 7,
     type: "NFT",
     rank: "NFT",
     stocks: 8,
-    limit: 2
+    limit: 2,
+    isActive: false
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6f9"),
@@ -33,7 +35,8 @@ exports.nftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 5,
-    limit: 3
+    limit: 3,
+    isActive: false
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6fa"),
@@ -44,7 +47,8 @@ exports.nftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 5,
-    limit: 4
+    limit: 4,
+    isActive: false
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e6fb"),
@@ -55,7 +59,8 @@ exports.nftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 3,
-    limit: 5
+    limit: 5,
+    isActive: false
 }    
 ]
 
@@ -70,7 +75,8 @@ exports.newnftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 0,
-    limit: 0
+    limit: 0,
+    isActive: false
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e702"),
@@ -81,7 +87,8 @@ exports.newnftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 0,
-    limit: 0
+    limit: 0,
+    isActive: false
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e703"),
@@ -92,7 +99,8 @@ exports.newnftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 0,
-    limit: 0
+    limit: 0,
+    isActive: false
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e704"),
@@ -103,7 +111,8 @@ exports.newnftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 0,
-    limit: 0
+    limit: 0,
+    isActive: false
 },
 {
     _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e705"),
@@ -114,6 +123,7 @@ exports.newnftdata = [
     type: "NFT",
     rank: "NFT",
     stocks: 0,
-    limit: 0
+    limit: 0,
+    isActive: false
 },
 ]

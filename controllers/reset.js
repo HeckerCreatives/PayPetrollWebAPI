@@ -40,7 +40,6 @@ exports.resetleaderboard = async (req, res) => {
                 const { _id, ...rest } = entry.toObject(); // Remove the _id field
 
                 // console.log('entry', entry);
-                console.log('index', index)
                 return {
                     owner: entry.owner,
                     amount: entry.amount,

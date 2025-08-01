@@ -53,7 +53,7 @@ exports.getNfttrainer = async (req, res) => {
         rank: item.rank,
         stocks: item.stocks,
         limit: item.limit || 0,
-        isActive: item.isActive !== undefined ? item.isActive : true, 
+        isActive: item.isActive !== undefined ? item.isActive : false, 
         isPurchased: existingtrianers.some(trainer => trainer.petname === item.name && trainer.rank === item.rank) || false,
         purchasedCount: existingtrianers.filter(trainer => trainer.petname === item.name && trainer.rank === item.rank).length || 0,
         timesbought: totalnftpurchasedcount.filter(trainer => trainer.trainername === item.name && trainer.rank === item.rank).length || 0,
@@ -62,7 +62,6 @@ exports.getNfttrainer = async (req, res) => {
     return res.status(200).json({ message: "success", data: formattedData });
 }
 
-// ...existing code...
 
 exports.editNfttrainer = async (req, res) => {
     const { nftid, name, profit, duration, price, type, rank, stocks, limit, isActive } = req.body;
@@ -79,7 +78,6 @@ exports.editNfttrainer = async (req, res) => {
     if (limit !== undefined) updateData.limit = parseInt(limit); 
     if (isActive !== undefined) updateData.isActive = isActive;
 
-    console.log("Update Data:", updateData);
     
     const numericValues = [price, profit, duration, stocks, limit].filter(val => val !== undefined);
     if (numericValues.some(val => parseFloat(val) < 0)) {
@@ -99,4 +97,3 @@ exports.editNfttrainer = async (req, res) => {
     return res.status(200).json({ message: "success" });
 }
 
-// ...existing code...

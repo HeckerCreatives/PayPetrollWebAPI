@@ -59,8 +59,8 @@ exports.edittrainer = async (req, res) => {
 
     if (b1t1 === "1"){
        const checkmainte = await checkmaintenance("b1t1")
-       if (checkmainte !== "maintenance"){
-            return res.status(400).json({ message: "failed", data: "b1t1 is currently disabled due to maintenance." });
+       if (checkmainte === "maintenance") {
+            return res.status(400).json({ message: "failed", data: "B1T1 is currently disabled due to maintenance." });
        }
     }
     await Trainer.findOneAndUpdate(
