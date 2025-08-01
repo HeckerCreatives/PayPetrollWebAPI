@@ -21,8 +21,8 @@ exports.getNfttrainer = async (req, res) => {
     }
 
     const newnfts = ["Spider Puppy", "Black Hachi", "Shiba Widow", "Doctor Puppy", "Captain Inu"]
-    data = data.filter(item => newnfts.includes(item.name));
-    if (data.length === 0) {
+    const newdata = data.filter(item => newnfts.includes(item.name));
+    if (newdata.length === 0) {
         for (const nft of newnftdata) {
             await NFTTrainer.findOneAndUpdate(
                 { _id: nft._id },
