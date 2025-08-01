@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose")
 const Trainer = require("../models/Trainer")
 const Inventoryhistory = require("../models/Inventoryhistory")
 const Inventory = require("../models/Inventory")
+const { checkmaintenance } = require("../utils/maintenancetools")
 
 
 exports.getTrainers = async(req, res)=> {
@@ -56,6 +57,12 @@ exports.edittrainer = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "b1t1 should only contain '1' and '0'." });
     }
 
+    if (b1t1 === "1"){
+       const checkmainte = await checkmaintenance("b1t1")
+       if (checkmainte !== "maintenance"){
+            return res.status(400).json({ message: "failed", data: "b1t1 is currently disabled due to maintenance." });
+       }
+    }
     await Trainer.findOneAndUpdate(
         {
             _id: new mongoose.Types.ObjectId(trainerid)
