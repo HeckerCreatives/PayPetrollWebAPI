@@ -22,7 +22,7 @@ exports.getTrainers = async(req, res)=> {
                         duration: "$duration",
                         profit: "$profit",
                         b1t1: "$b1t1",
-                        isActive: "$isActive" || false // Default to false if isActive is not set
+                        isActive: { $ifNull: ["$isActive", false] }
                     }
                 }
             }
