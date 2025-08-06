@@ -129,7 +129,9 @@ exports.gettierentry = async (req, res) => {
     "Free": false,
     "Novice": false,
     "Expert": false,
-    "Elite": false
+    "Elite": false,
+    "Ace of Spade": false,
+    "Ace of Heart": false,
   }
 
   entries.forEach(tempdata => {
