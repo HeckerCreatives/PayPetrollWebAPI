@@ -28,10 +28,14 @@ const TrainerSchema = new mongoose.Schema(
         },
         b1t1: {
             type: String
-        }
+        },
+        isActive: {
+            type: Boolean,
+            default: false,
+        },
     },
     {
-        tiimestamps: true,
+        timestamps: true,
     }
 )
 

@@ -21,7 +21,8 @@ exports.getTrainers = async(req, res)=> {
                         max: "$max",
                         duration: "$duration",
                         profit: "$profit",
-                        b1t1: "$b1t1"
+                        b1t1: "$b1t1",
+                        isActive: "$isActive" || false // Default to false if isActive is not set
                     }
                 }
             }
@@ -40,7 +41,7 @@ exports.getTrainers = async(req, res)=> {
 
 exports.edittrainer = async (req, res) => {
 
-    const { trainerid, profit, duration, min, max, b1t1 } = req.body
+    const { trainerid, profit, duration, min, max, b1t1, isActive } = req.body
 
     if(!trainerid || !profit || !duration){
         return res.status(400).json({ message: "failed", data: "Incomplete form data."})
@@ -55,6 +56,10 @@ exports.edittrainer = async (req, res) => {
 
     if (b1t1 && !/^[01]+$/.test(b1t1)) {
         return res.status(400).json({ message: "failed", data: "b1t1 should only contain '1' and '0'." });
+    }
+
+    if (isActive !== undefined && typeof isActive !== 'boolean') {
+        return res.status(400).json({ message: "failed", data: "isActive should be a boolean value." });
     }
 
     if (b1t1 === "1"){
@@ -73,7 +78,8 @@ exports.edittrainer = async (req, res) => {
                 duration: parseFloat(duration),
                 min: parseFloat(min),
                 max: parseFloat(max),
-                ...(b1t1 && { b1t1 }) // Only update b1t1 if it is provided
+                ...(b1t1 && { b1t1 }), // Only update b1t1 if it is provided
+                ...(isActive !== undefined && { isActive }) // Only update isActive if it is provided
             }
         }
     )
