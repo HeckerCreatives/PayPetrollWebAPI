@@ -282,8 +282,9 @@ exports.getplayerlist = async (req, res) => {
             return res.status(400).json({ message: "bad-request", data: "There's a problem getting your user details. Please contact customer support." });
         });
 
+
     const data = {
-        totalPages: Math.ceil(userlist[0].totalCount[0].total / pageOptions.limit),
+        totalPages: Math.ceil(userlist[0].totalCount[0]?.total / pageOptions.limit),
         userlist: []
     };
 

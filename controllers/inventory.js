@@ -132,11 +132,11 @@ exports.buytrainer = async (req, res) => {
             // Create second trainer (B1T1)
             await Inventory.create([b1t1Inventory], { session });
             const inventoryhistory1 = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount);
-            await addanalytics(id, inventoryhistory1.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount);
+            await addanalytics(id, inventoryhistory1.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, amount);
         } else {
             await Inventory.create([baseInventory], { session });
             const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, amount);
-            await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.trainer}`, amount);
+            await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, amount);
         }
 
         await session.commitTransaction();
@@ -713,7 +713,7 @@ exports.getplayerinventoryforadmin = async (req, res) => {
                 .skip(pageOptions.page * pageOptions.limit)
                 .limit(pageOptions.limit)
                 .sort({ 'createdAt': -1 }),
-            Inventory.countDocuments({ owner: id })
+            Inventory.countDocuments({ owner: playerid })
         ]);
 
         const pages = Math.ceil(totalDocuments / pageOptions.limit);

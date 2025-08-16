@@ -29,7 +29,8 @@ exports.resetleaderboard = async (req, res) => {
         // find last entry in the leaderboard history
         const lastEntry = await LeaderboardHistory.findOne({}).sort({ date: -1 }).limit(1);
         let index = 1
-        if (lastEntry.index != null) {
+
+        if (lastEntry?.index != null) {
             // If there is a last entry, set the index to the next number
             index = lastEntry.index + 1;
         }
