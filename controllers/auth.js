@@ -152,7 +152,6 @@ exports.authlogin = async(req, res) => {
             await Users.findOne({ username: { $regex: new RegExp('^' + username + '$', 'i') } })
             .then(async user => {
 
-                
                     if (user && (await global.matchPassword(password))){
                         if(!ipAddress) {
                             return res.status(400).json({ message: "failed", data: "Please input your IP Address."})

@@ -1,5 +1,5 @@
 const { default: mongoose } = require("mongoose");
-const { nftdata, newnftdata } = require("../initialization/data");
+const { nftdata, newnftdata, newnewnftdata } = require("../initialization/data");
 const NFTTrainer = require("../models/Nfttrainer");
 const NFTInventory = require("../models/Nftinventory");
 const Inventoryhistory = require("../models/Inventoryhistory");
@@ -24,6 +24,20 @@ exports.getNfttrainer = async (req, res) => {
     const newdata = data.filter(item => newnfts.includes(item.name));
     if (newdata.length === 0) {
         for (const nft of newnftdata) {
+            await NFTTrainer.findOneAndUpdate(
+                { _id: nft._id },
+                { $set: nft },
+                { upsert: true, new: true }
+            );
+        }
+        data = await NFTTrainer.find();
+    }
+
+    const newnewnfts = ["Shibarine", "DOG POOL", "Shibaclops", "Hachi Fury", "Magne Dog"]
+    const newnewdata = data.filter(item => newnewnfts.includes(item.name));
+
+    if (newnewdata.length === 0) {
+        for (const nft of newnewnftdata) {
             await NFTTrainer.findOneAndUpdate(
                 { _id: nft._id },
                 { $set: nft },

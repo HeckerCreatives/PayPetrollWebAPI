@@ -127,3 +127,66 @@ exports.newnftdata = [
     isActive: false
 },
 ]
+
+exports.newnewnftdata = [
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e701"),
+    name: "Shibarine",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e702"),
+    name: "DOG POOL",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e703"),
+    name: "Shibaclops",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e704"),
+    name: "Hachi Fury",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e705"),
+    name: "Magnedog",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+]
