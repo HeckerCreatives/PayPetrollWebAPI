@@ -130,7 +130,7 @@ exports.newnftdata = [
 
 exports.newnewnftdata = [
 {
-    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e701"),
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e706"),
     name: "Shibarine",
     price: 10000,
     profit: 1.2,
@@ -142,7 +142,7 @@ exports.newnewnftdata = [
     isActive: false
 },
 {
-    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e702"),
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e707"),
     name: "DOG POOL",
     price: 10000,
     profit: 1.2,
@@ -154,7 +154,7 @@ exports.newnewnftdata = [
     isActive: false
 },
 {
-    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e703"),
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e708"),
     name: "Shibaclops",
     price: 10000,
     profit: 1.2,
@@ -166,7 +166,7 @@ exports.newnewnftdata = [
     isActive: false
 },
 {
-    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e704"),
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e709"),
     name: "Hachi Fury",
     price: 10000,
     profit: 1.2,
@@ -178,7 +178,7 @@ exports.newnewnftdata = [
     isActive: false
 },
 {
-    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e705"),
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e70a"),
     name: "Magnedog",
     price: 10000,
     profit: 1.2,
