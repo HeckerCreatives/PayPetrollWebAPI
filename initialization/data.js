@@ -190,3 +190,66 @@ exports.newnewnftdata = [
     isActive: false
 },
 ]
+
+exports.anothernewnewnftdata = [
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e70b"),
+    name: "ANT DOG",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e70c"),
+    name: "LOCHI",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e70d"),
+    name: "Hachi Eye",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e70e"),
+    name: "Droog",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e70f"),
+    name: "Dogmora",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+]
