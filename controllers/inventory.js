@@ -216,15 +216,31 @@ exports.buynfttrainer = async (req, res) => {
             startdate: DateTimeServer(), 
         };
 
+        // Build documents to insert
+        const inventoryDocs = [];
         for (let i = 0; i < quantity; i++) {
-            
-            const unilevelrewards = await sendcommissionunilevel(trainer.price, id, trainer.name, trainer.rank)
-            if (unilevelrewards != "success"){
-                return res.status(400).json({message: "failed", data: "There's a problem with your account. Please contact customer support for more details"});
+            inventoryDocs.push({ ...baseInventory, _id: new mongoose.Types.ObjectId() });
+        }
+
+        try {
+            await NFTInventory.insertMany(inventoryDocs, { session });
+        } catch (insertErr) {
+            console.error(`Failed to insert NFTInventory for user ${id}, nft ${trainer.name}:`, insertErr);
+            throw insertErr; // trigger transaction abort
+        }
+
+        try {
+            for (let i = 0; i < quantity; i++) {
+                const unilevelrewards = await sendcommissionunilevel(trainer.price, id, trainer.name, trainer.rank);
+                if (unilevelrewards != "success"){
+                    throw new Error('unilevel failure');
+                }
+                const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, trainer.price);
+                await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, trainer.price);
             }
-            await NFTInventory.create([baseInventory], { session });
-            const inventoryhistory = await saveinventoryhistory(id, trainer.name, trainer.rank, `Buy ${trainer.name}`, trainer.price);
-            await addanalytics(id, inventoryhistory.data.transactionid, `Buy ${trainer.name}`, `User ${username} bought ${trainer.name}`, trainer.price);
+        } catch (histErr) {
+            console.error(`Failed to save history/analytics for user ${id}, nft ${trainer.name}:`, histErr);
+            throw histErr;
         }
 
         trainer.stocks -= quantity;
