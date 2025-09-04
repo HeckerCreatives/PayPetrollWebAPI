@@ -6,6 +6,7 @@ const { addanalytics } = require("../utils/analyticstools")
 const { checkmaintenance } = require("../utils/maintenancetools")
 const Conversionrate = require("../models/Conversionrate")
 const StaffUserwallets = require("../models/Staffuserwallets")
+const { isPayoutAllowedPhilippine } = require('../utils/datetimetools');
 
 exports.requestpayout = async (req, res) => {
     const {id, username} = req.user
@@ -14,11 +15,21 @@ exports.requestpayout = async (req, res) => {
     const maintenance = await checkmaintenance("payout")
 
     if (maintenance == "maintenance"){
-        return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available from 12:00pm - 11:59pm Monday PST." })
+    return res.status(400).json({ message: "failed", data: "The payout is currently not available. Payout is only available on the 15th and 30th of the month (Philippine Time) from 12:00am - 11:59pm." })
     }
 
     else if (maintenance != "success"){
         return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
+    }
+
+    // Enforce schedule: only allow payouts on 15th and 30th of each month (Philippine Time)
+    try {
+        const allowed = isPayoutAllowedPhilippine();
+        if (allowed === false) {
+            return res.status(400).json({ message: "failed", data: "Payout is currently only available on the 15th and 30th of the month." });
+        }
+    } catch (err) {
+        console.error('Payout availability helper error:', err);
     }
 
     const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})

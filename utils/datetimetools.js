@@ -102,3 +102,38 @@ exports.RemainingTime = (startTime, claimDays) => {
 
     return remainingTimeSeconds;
 }
+
+
+exports.ManualDateTimeServer = (passeddate) => {
+    const date = new Date(passeddate);
+
+    // Get the Unix timestamp in milliseconds
+    const unixTimeMilliseconds = date.getTime();
+        
+    // Convert it to Unix timestamp in seconds
+    const unixTimeSeconds = Math.floor(unixTimeMilliseconds / 1000);
+    
+    return unixTimeSeconds;
+}
+
+// Returns true if today (Philippine Time) is 15th or 30th of month, false otherwise.
+// Returns null if an error occurs (caller can choose fallback behavior).
+exports.isPayoutAllowedPhilippine = () => {
+    let momentLib;
+    try { momentLib = require('moment-timezone'); } catch (e) { try { momentLib = require('moment'); } catch (err) { console.error('Moment not available', err); return null; } }
+
+    try {
+        let nowPH;
+        if (typeof momentLib.tz === 'function') {
+            nowPH = momentLib.tz(new Date(), 'Asia/Manila');
+        } else {
+            nowPH = momentLib(new Date());
+        }
+
+        const dayOfMonth = nowPH.date();
+        return (dayOfMonth === 15 || dayOfMonth === 30);
+    } catch (err) {
+        console.error('isPayoutAllowedPhilippine error:', err);
+        return null;
+    }
+}
