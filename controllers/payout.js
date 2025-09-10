@@ -22,15 +22,15 @@ exports.requestpayout = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "There's a problem requesting your payout! Please try again later." })
     }
 
-    // Enforce schedule: only allow payouts on 15th and 30th of each month (Philippine Time)
-    try {
-        const allowed = isPayoutAllowedPhilippine();
-        if (allowed === false) {
-            return res.status(400).json({ message: "failed", data: "Payout is currently only available on the 15th and 30th of the month." });
-        }
-    } catch (err) {
-        console.error('Payout availability helper error:', err);
-    }
+    // // Enforce schedule: only allow payouts on 15th and 30th of each month (Philippine Time)
+    // try {
+    //     const allowed = isPayoutAllowedPhilippine();
+    //     if (allowed === false) {
+    //         return res.status(400).json({ message: "failed", data: "Payout is currently only available on the 15th and 30th of the month." });
+    //     }
+    // } catch (err) {
+    //     console.error('Payout availability helper error:', err);
+    // }
 
     const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
     .then(data => data)
@@ -45,9 +45,15 @@ exports.requestpayout = async (req, res) => {
         }
     }
 
-    if(paymentmethod == 'gcash' ){
+    if(paymentmethod == 'gcash' || paymentmethod == 'maya'){
         if (payoutvalue < 500 || payoutvalue > 5000){
         return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 5000" })
+        }
+    }
+
+    if (['bdo', 'bpi', 'unionbank', 'eastwest', 'securitybank', 'metrobank', 'cimb', 'komo'].includes(paymentmethod)){
+        if (payoutvalue < 500 || payoutvalue > 50001){
+            return res.status(400).json({ message: "failed", data: "Payout value must be between 500 and 50000" })
         }
     }
     const wallet = await Userwallets.findOne({owner: new mongoose.Types.ObjectId(id), type: type})

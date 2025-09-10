@@ -36,10 +36,6 @@ exports.buytrainer = async (req, res) => {
             return res.status(400).json({message: "failed", data: `The minimum price for ${trainer.name} is ${trainer.min} pesos`});
         }
 
-        if (amount > trainer.max){
-            return res.status(400).json({message: "failed", data: `The maximum price for ${trainer.name} is ${trainer.max} pesos`});
-        }
-
         if (!trainer.isActive){
             return res.status(400).json({message: "failed", data: `${trainer.name} is currently inactive and cannot be purchased.`});
         }
