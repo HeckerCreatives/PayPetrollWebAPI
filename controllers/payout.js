@@ -7,6 +7,7 @@ const { checkmaintenance } = require("../utils/maintenancetools")
 const Conversionrate = require("../models/Conversionrate")
 const StaffUserwallets = require("../models/Staffuserwallets")
 const { isPayoutAllowedPhilippine } = require('../utils/datetimetools');
+const moment = require('moment-timezone');
 
 exports.requestpayout = async (req, res) => {
     const {id, username} = req.user
@@ -184,22 +185,38 @@ exports.getpayoutlist = async (req, res) => {
         }
     ];
 
+    if (date) {
+        const start = moment.tz(date, 'Asia/Manila').startOf('day').toDate();
+        const end = moment(start).add(1, 'day').toDate();
+
+        payoutpipelinelist.splice(1, 0, {
+            $match: {
+                createdAt: {
+                    $gte: start,
+                    $lt: end
+                }
+            }
+        });
+    }
+
     // Conditionally add $match stage for searchtype and search
     if (searchtype && search) {
         const matchCondition = {};
+        const q = (search || "").trim();
+
         // searchtypes accountname, accountnumber, username, paymentmethod and netamount
         if (searchtype === 'accountname') {
-            matchCondition['accountname'] = { $regex: new RegExp(search, 'i') };
+            matchCondition.accountname = { $regex: q, $options: 'i' };
         } else if (searchtype === 'accountnumber') {
-            matchCondition['accountnumber'] = { $regex: new RegExp(search, 'i') };
+            matchCondition['accountnumber'] = { $regex: q, $options: 'i' };
         } else if (searchtype === 'username') {
             payoutpipelinelist.push({
                 $match: {
-                    'ownerinfo.username': { $regex: new RegExp(search, 'i') }
+                    'ownerinfo.username': { $regex: q, $options: 'i' }
                 }
             });
         } else if (searchtype === 'paymentmethod') {
-            matchCondition['paymentmethod'] = { $regex: new RegExp(search, 'i') };
+            matchCondition['paymentmethod'] = { $regex: q, $options: 'i' };
         } else if (searchtype === 'netamount') {
             const netAmount = parseFloat(search);
             if (!isNaN(netAmount)) {
@@ -215,18 +232,6 @@ exports.getpayoutlist = async (req, res) => {
         });
     }
 
-    
-
-    if (date) {
-        payoutpipelinelist.splice(1, 0, {
-            $match: {
-                createdAt: {
-                    $gte: new Date(date + "T00:00:00Z"),
-                    $lt: new Date(new Date(date + "T00:00:00Z").getTime() + 24 * 60 * 60 * 1000)
-                }
-            }
-        });
-    }
 
     if (methodtype) {
         payoutpipelinelist.splice(1, 0, {
@@ -280,7 +285,6 @@ exports.getpayoutlist = async (req, res) => {
     try {
         const payoutlistResult = await Payout.aggregate(payoutpipelinelist);
 
-        console.log(payoutlistResult[0].data)
 
         const totalPages = payoutlistResult[0].totalPages[0]?.count || 0;
         const pages = Math.ceil(totalPages / pageOptions.limit);
