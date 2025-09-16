@@ -33,12 +33,12 @@ exports.requestpayout = async (req, res) => {
     //     console.error('Payout availability helper error:', err);
     // }
 
-    const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
-    .then(data => data)
+    // const exist = await Payout.find({owner: new mongoose.Types.ObjectId(id), type: type, status: "processing"})
+    // .then(data => data)
 
-    if (exist.length > 0){
-        return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
-    }
+    // if (exist.length > 0){
+    //     return res.status(400).json({ message: "failed", data: "There's an existing request! Please wait for it to be processed before requesting another payout." })
+    // }
 
     if (paymentmethod == 'gotyme'){
         if (payoutvalue < 500 || payoutvalue > 500001){
