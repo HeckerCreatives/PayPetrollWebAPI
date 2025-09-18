@@ -1,5 +1,5 @@
 const { default: mongoose } = require("mongoose");
-const { nftdata, newnftdata, newnewnftdata, anothernewnewnftdata } = require("../initialization/data");
+const { nftdata, newnftdata, newnewnftdata, anothernewnewnftdata, batchfivenftdata } = require("../initialization/data");
 const NFTTrainer = require("../models/Nfttrainer");
 const NFTInventory = require("../models/Nftinventory");
 const Inventoryhistory = require("../models/Inventoryhistory");
@@ -16,42 +16,57 @@ exports.getNfttrainer = async (req, res) => {
             return res.status(500).json({ message: "failed", data: "Internal server error." });
         });
 
-    if (!data || data.length === 0) {
-         data = await NFTTrainer.insertMany(nftdata)
-    }
+    // if (!data || data.length === 0) {
+    //      data = await NFTTrainer.insertMany(nftdata)
+    // }
 
-    const newnfts = ["Spider Puppy", "Black Hachi", "Shiba Widow", "Doctor Puppy", "Captain Inu"]
-    const newdata = data.filter(item => newnfts.includes(item.name));
-    if (newdata.length === 0) {
-        for (const nft of newnftdata) {
-            await NFTTrainer.findOneAndUpdate(
-                { _id: nft._id },
-                { $set: nft },
-                { upsert: true, new: true }
-            );
-        }
-        data = await NFTTrainer.find();
-    }
+    // const newnfts = ["Spider Puppy", "Black Hachi", "Shiba Widow", "Doctor Puppy", "Captain Inu"]
+    // const newdata = data.filter(item => newnfts.includes(item.name));
+    // if (newdata.length === 0) {
+    //     for (const nft of newnftdata) {
+    //         await NFTTrainer.findOneAndUpdate(
+    //             { _id: nft._id },
+    //             { $set: nft },
+    //             { upsert: true, new: true }
+    //         );
+    //     }
+    //     data = await NFTTrainer.find();
+    // }
 
-    const newnewnfts = ["Shibarine", "DOG POOL", "Shibaclops", "Hachi Fury", "Magne Dog"]
-    const newnewdata = data.filter(item => newnewnfts.includes(item.name));
+    // const newnewnfts = ["Shibarine", "DOG POOL", "Shibaclops", "Hachi Fury", "Magne Dog"]
+    // const newnewdata = data.filter(item => newnewnfts.includes(item.name));
 
-    if (newnewdata.length === 0) {
-        for (const nft of newnewnftdata) {
-            await NFTTrainer.findOneAndUpdate(
-                { _id: nft._id },
-                { $set: nft },
-                { upsert: true, new: true }
-            );
-        }
-        data = await NFTTrainer.find();
-    }
+    // if (newnewdata.length === 0) {
+    //     for (const nft of newnewnftdata) {
+    //         await NFTTrainer.findOneAndUpdate(
+    //             { _id: nft._id },
+    //             { $set: nft },
+    //             { upsert: true, new: true }
+    //         );
+    //     }
+    //     data = await NFTTrainer.find();
+    // }
 
-    const anothernewnewnfts = ["ANT DOG", "LOCHI", "Hachi Eye", "Droog", "Dogmora"]
-    const anothernewnewdata = data.filter(item => anothernewnewnfts.includes(item.name));
+    // const anothernewnewnfts = ["ANT DOG", "LOCHI", "Hachi Eye", "Droog", "Dogmora"]
+    // const anothernewnewdata = data.filter(item => anothernewnewnfts.includes(item.name));
 
-    if (anothernewnewdata.length === 0) {
-        for (const nft of anothernewnewnftdata) {
+    // if (anothernewnewdata.length === 0) {
+    //     for (const nft of anothernewnewnftdata) {
+    //         await NFTTrainer.findOneAndUpdate(
+    //             { _id: nft._id },
+    //             { $set: nft },
+    //             { upsert: true, new: true }
+    //         );
+    //     }
+    //     data = await NFTTrainer.find();
+    // }
+
+
+    const batchfivenfts = ["Winter Doggie", "Dog Machine", "Waspinu", "Scarlet Dog", "Quick Doggie"]
+    const batchfivedata = data.filter(item => batchfivenfts.includes(item.name));
+
+    if (batchfivedata.length === 0) {
+        for (const nft of batchfivenftdata) {
             await NFTTrainer.findOneAndUpdate(
                 { _id: nft._id },
                 { $set: nft },

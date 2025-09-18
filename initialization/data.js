@@ -253,3 +253,67 @@ exports.anothernewnewnftdata = [
     isActive: false
 },
 ]
+
+
+exports.batchfivenftdata = [
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e75b"),
+    name: "Winter Doggie",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e75c"),
+    name: "Dog Machine",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e75d"),
+    name: "Waspinu",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e75e"),
+    name: "Scarlet Dog",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+{
+    _id: new mongoose.Types.ObjectId("64f8c1b2e4b0f3a1c8d5e75f"),
+    name: "Quick Doggie",
+    price: 10000,
+    profit: 1.2,
+    duration: 10,
+    type: "NFT",
+    rank: "NFT",
+    stocks: 0,
+    limit: 0,
+    isActive: false
+},
+]
